@@ -10,8 +10,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Empecemos · Ekumen",
-  description: "Cuatro prácticas cortas para explorar los nuevos valores de Ekumen.",
+  title: "Ekumen Sandbox",
+  description:
+    "Explorá los ocho valores de Ekumen en cuatro ejes, con minijuegos y ranking.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
