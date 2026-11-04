@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocale } from "@/app/lib/i18n/LocaleProvider";
 import type { GameResult } from "@/app/lib/types";
-import { clampScore } from "@/app/lib/scoring";
+import { scoreFailed, scoreFromQualityAndTime, wordleQuality } from "@/app/lib/scoring";
 
 const WORD = "VALOR";
 const MAX_GUESSES = 6;
@@ -41,6 +42,7 @@ type Props = {
 };
 
 export function WordleGame({ onFinish }: Props) {
+  const { t } = useLocale();
   const started = useRef(Date.now());
   const [rows, setRows] = useState<string[]>(Array(MAX_GUESSES).fill(""));
   const [states, setStates] = useState<LetterState[][]>(
@@ -60,28 +62,32 @@ export function WordleGame({ onFinish }: Props) {
     (won: boolean, guessesUsed: number) => {
       setDone(true);
       const elapsed = Date.now() - started.current;
-      const attemptPoints = won ? (MAX_GUESSES - guessesUsed + 1) * 35 : 20;
-      const timeBonus = won
-        ? Math.round(40 * Math.max(0, Math.min(1, 1 - (elapsed - 20_000) / 100_000)))
-        : 0;
-      const score = clampScore(attemptPoints + timeBonus);
-      setMessage(
-        won
-          ? "Lo resolviste iterando: probar, leer la señal, ajustar."
-          : `La palabra era ${WORD}. Igual, el proceso iterativo cuenta.`,
-      );
+      const breakdown = won
+        ? scoreFromQualityAndTime(wordleQuality(true, guessesUsed), elapsed)
+        : scoreFailed();
+      setMessage(won ? t.wordle.success : t.wordle.fail);
       window.setTimeout(
-        () => onFinish({ score, meta: { won, guessesUsed, word: WORD } }),
+        () =>
+          onFinish({
+            score: breakdown.total,
+            meta: {
+              won,
+              guessesUsed,
+              word: WORD,
+              quality: breakdown.quality,
+              time: breakdown.time,
+            },
+          }),
         1000,
       );
     },
-    [onFinish],
+    [onFinish, t.wordle.fail, t.wordle.success],
   );
 
   const submit = useCallback(() => {
     if (done) return;
     if (current.length !== 5) {
-      setMessage("La palabra tiene 5 letras.");
+      setMessage(t.wordle.needFive);
       return;
     }
     const guess = current.toUpperCase();
@@ -115,7 +121,7 @@ export function WordleGame({ onFinish }: Props) {
     setRowIndex((i) => i + 1);
     setCurrent("");
     setMessage(null);
-  }, [current, done, finish, rowIndex, rows, states]);
+  }, [current, done, finish, rowIndex, rows, states, t.wordle.needFive]);
 
   const onKey = useCallback(
     (key: string) => {
@@ -152,7 +158,7 @@ export function WordleGame({ onFinish }: Props) {
           const letters =
             r === rowIndex && !done ? current.padEnd(5) : (rows[r] || "").padEnd(5);
           return (
-            <div key={r} className="flex gap-2">
+            <div key={r} className="flex gap-1.5 sm:gap-2">
               {Array.from({ length: 5 }, (_, c) => {
                 const ch = letters[c] === " " ? "" : letters[c];
                 const st =
@@ -162,7 +168,7 @@ export function WordleGame({ onFinish }: Props) {
                 return (
                   <div
                     key={c}
-                    className={`flex h-12 w-12 items-center justify-center rounded-xl border text-lg font-semibold uppercase ${cellTone[st]}`}
+                    className={`flex h-11 w-11 items-center justify-center rounded-sm border text-lg font-semibold uppercase sm:h-12 sm:w-12 ${cellTone[st]}`}
                   >
                     {ch}
                   </div>
@@ -186,7 +192,7 @@ export function WordleGame({ onFinish }: Props) {
               <button
                 type="button"
                 onClick={() => onKey("ENTER")}
-                className="rounded-lg bg-[#02043E]/08 px-3 py-3 text-xs font-medium"
+                className="min-h-11 rounded-lg bg-[#02043E]/08 px-2 py-3 text-[11px] font-medium sm:px-3 sm:text-xs"
               >
                 ENTER
               </button>
@@ -206,7 +212,7 @@ export function WordleGame({ onFinish }: Props) {
                   key={key}
                   type="button"
                   onClick={() => onKey(key)}
-                  className={`h-11 min-w-8 rounded-lg px-2 text-sm font-medium ${tone}`}
+                  className={`h-11 min-w-7 rounded-lg px-1.5 text-sm font-medium sm:min-w-8 sm:px-2 ${tone}`}
                 >
                   {key}
                 </button>
@@ -216,7 +222,7 @@ export function WordleGame({ onFinish }: Props) {
               <button
                 type="button"
                 onClick={() => onKey("BACKSPACE")}
-                className="rounded-lg bg-[#02043E]/08 px-3 py-3 text-xs font-medium"
+                className="min-h-11 rounded-lg bg-[#02043E]/08 px-2 py-3 text-[11px] font-medium sm:px-3 sm:text-xs"
               >
                 ⌫
               </button>

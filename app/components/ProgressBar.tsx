@@ -17,9 +17,9 @@ export function ProgressBar({ current, total, accent = "#02043E", label }: Props
           {current}/{total}
         </span>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-[#02043E]/10">
+      <div className="h-1.5 overflow-hidden rounded-sm bg-[#02043E]/10">
         <div
-          className="h-full rounded-full transition-all duration-300"
+          className="h-full rounded-sm transition-all duration-300"
           style={{ width: `${pct}%`, background: accent }}
         />
       </div>

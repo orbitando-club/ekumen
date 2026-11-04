@@ -4,9 +4,14 @@ import { useEffect, useId, useState } from "react";
 import type { ClusterId, Progress } from "@/app/lib/types";
 import { emptyProgress } from "@/app/lib/types";
 
+/**
+ * Orden de llenado antihorario empezando por el azul claro (arriba-derecha):
+ * think → together → happen → deliver
+ * = TR → TL → BL → BR
+ */
 const facets: { id: ClusterId; points: string; from: string; to: string }[] = [
-  { id: "think", points: "43,0 0,80 86,80", from: "#023D8F", to: "#2B65E7" },
-  { id: "together", points: "43,0 129,0 86,80", from: "#2B65E7", to: "#448FF4" },
+  { id: "think", points: "43,0 129,0 86,80", from: "#2B65E7", to: "#448FF4" },
+  { id: "together", points: "43,0 0,80 86,80", from: "#023D8F", to: "#2B65E7" },
   { id: "happen", points: "0,80 86,80 43,160", from: "#453CA3", to: "#775DFD" },
   { id: "deliver", points: "86,80 129,160 43,160", from: "#683C95", to: "#AE66FF" },
 ];

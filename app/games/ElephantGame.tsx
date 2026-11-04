@@ -1,188 +1,299 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useLocale } from "@/app/lib/i18n/LocaleProvider";
 import type { GameResult } from "@/app/lib/types";
-import { clampScore, scoreFromTime } from "@/app/lib/scoring";
+import { elephantQuality, scoreFailed, scoreFromQualityAndTime } from "@/app/lib/scoring";
 
-/** Unir puntos en orden: cada trazo revela lo que “ve” un sabio. */
-const DOTS = [
-  { id: 0, x: 72, y: 108, label: "Trompa", simile: "como una serpiente" },
-  { id: 1, x: 108, y: 72, label: "Oreja", simile: "como un abanico" },
-  { id: 2, x: 168, y: 58, label: "Cabeza", simile: "como una piedra redonda" },
-  { id: 3, x: 228, y: 96, label: "Costado", simile: "como una pared" },
-  { id: 4, x: 248, y: 148, label: "Cola", simile: "como una cuerda" },
-  { id: 5, x: 190, y: 188, label: "Pata", simile: "como un árbol" },
-  { id: 6, x: 120, y: 178, label: "Colmillo", simile: "como una lanza" },
+/**
+ * Vértices y aristas parseados de `elefante.svg`.
+ * Cada arista = un trazo del dibujo; los puntos son inicios/fines de esos trazos.
+ */
+const RAW_POINTS: [number, number][] = [
+  [248.507, 179.502], [246.007, 140.502], [239.007, 90.002], [233.007, 60.502],
+  [218.507, 32.502], [198.507, 13.502], [172.507, 2.502], [146.507, 0.502],
+  [131.007, 2.502], [109.007, 10.502], [93.507, 24.503], [239.007, 218.002],
+  [198.007, 218.002], [198.007, 171.002], [157.507, 218.002], [157.507, 186.002],
+  [171.507, 129.002], [198.007, 151.002], [129.007, 182.002], [143.007, 186.002],
+  [183.007, 179.502], [163.507, 186.002], [56.507, 35.002], [45.007, 52.002],
+  [74.007, 140.502], [98.007, 137.502], [120.507, 116.502], [129.007, 86.002],
+  [123.507, 51.502], [105.007, 27.503], [82.007, 20.003], [67.007, 24.503],
+  [38.507, 32.502], [22.507, 40.002], [5.507, 59.502], [0.507, 82.002],
+  [18.007, 220.502], [28.007, 220.502], [28.007, 142.079], [85.507, 219.502],
+  [87.007, 158.002], [72.515, 134.002], [63.007, 138.161], [48.507, 144.502],
+  [32.507, 144.502], [13.007, 134.002], [32.507, 134.002], [48.507, 128.502],
+  [67.007, 110.002], [136.007, 111.502], [129.007, 127.002], [128.507, 219.502],
+  [61.507, 218.502],
 ];
 
-const TOTAL_EDGES = DOTS.length - 1;
+const EDGES: [number, number][] = [
+  [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10],
+  [2, 11], [11, 12], [12, 13], [12, 14], [14, 15], [16, 17], [17, 13], [18, 19],
+  [19, 15], [13, 20], [20, 21], [21, 15], [22, 23], [24, 25], [25, 26], [26, 27],
+  [27, 28], [28, 29], [29, 30], [30, 31], [31, 22], [22, 32], [32, 33], [33, 34],
+  [34, 35], [35, 36], [36, 37], [37, 38], [39, 40], [40, 24], [24, 41], [42, 43],
+  [43, 44], [44, 38], [38, 45], [45, 46], [46, 47], [47, 48], [48, 41], [41, 42],
+  [49, 50], [50, 51], [51, 39], [39, 52], [52, 42],
+];
 
-const OPTIONS = ["Una pared", "Un elefante", "Seis animales distintos", "Una serpiente"];
+const OUTLINE_PATHS = [
+  "M248.507 179.502L246.007 140.502L239.007 90.0025L233.007 60.5025L218.507 32.5025L198.507 13.5025L172.507 2.50247L146.507 0.502472L131.007 2.50247L109.007 10.5025L93.507 24.5025M239.007 90.0025V218.002H198.007M198.007 218.002V171.002M198.007 218.002H157.507V186.002M171.507 129.002L198.007 151.002V171.002M129.007 182.002L143.007 186.002H157.507M198.007 171.002L183.007 179.502L163.507 186.002H157.507M56.507 35.0025L45.007 52.0025",
+  "M74.007 140.502L98.007 137.502L120.507 116.502L129.007 86.0025L123.507 51.5025L105.007 27.5025L82.007 20.0025L67.007 24.5025L56.507 35.0025L38.507 32.5025L22.507 40.0025L5.50696 59.5025L0.506958 82.0025L18.007 220.502H28.007V142.079M85.507 219.502L87.007 158.002L74.007 140.502L72.5152 134.002M63.007 138.161L48.507 144.502H32.507L28.007 142.079L13.007 134.002H32.507L48.507 128.502L67.007 110.002L72.5152 134.002M72.5152 134.002L63.007 138.161M136.007 111.502L129.007 127.002L128.507 219.502H85.507L61.507 218.502L63.007 138.161",
+];
+
+const EYE = { cx: 37.507, cy: 82.5025, r: 7 };
+const HIT = 14;
+/** Padding para que puntos/trazos no se corten en el borde */
+const PAD = 12;
+const VB = { w: 249, h: 221 };
 
 type Props = {
   onFinish: (result: GameResult) => void;
 };
 
+function dist(ax: number, ay: number, bx: number, by: number) {
+  return Math.hypot(ax - bx, ay - by);
+}
+
 export function ElephantGame({ onFinish }: Props) {
+  const { t } = useLocale();
   const started = useRef(Date.now());
-  const [nextIndex, setNextIndex] = useState(0);
-  const [wrongFlash, setWrongFlash] = useState<number | null>(null);
-  const [mistakes, setMistakes] = useState(0);
-  const [lastReveal, setLastReveal] = useState<(typeof DOTS)[number] | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const drawing = useRef(false);
+  const lastId = useRef<number | null>(null);
+
+  const [visited, setVisited] = useState<Set<number>>(() => new Set());
+  const [drawn, setDrawn] = useState<Set<string>>(() => new Set());
+  const [activeId, setActiveId] = useState<number | null>(null);
   const [answer, setAnswer] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+
+  const neighbors = useMemo(() => {
+    const map = new Map<number, number[]>();
+    for (const [a, b] of EDGES) {
+      if (!map.has(a)) map.set(a, []);
+      if (!map.has(b)) map.set(b, []);
+      map.get(a)!.push(b);
+      map.get(b)!.push(a);
+    }
+    return map;
+  }, []);
 
   useEffect(() => {
     started.current = Date.now();
   }, []);
 
-  const complete = nextIndex >= DOTS.length - 1;
-  const connected = DOTS.slice(0, nextIndex + 1);
+  const allEdgesDrawn = drawn.size >= EDGES.length;
+  const complete = allEdgesDrawn || visited.size >= RAW_POINTS.length;
 
-  function onDotClick(id: number) {
-    if (done || complete) return;
-    if (id === nextIndex + 1) {
-      setNextIndex(id);
-      setLastReveal(DOTS[id]);
-      setWrongFlash(null);
-      return;
-    }
-    if (id === nextIndex) return;
-    setMistakes((n) => n + 1);
-    setWrongFlash(id);
-    window.setTimeout(() => setWrongFlash(null), 350);
+  function edgeKey(a: number, b: number) {
+    return a < b ? `${a}-${b}` : `${b}-${a}`;
   }
+
+  function clientToSvg(clientX: number, clientY: number) {
+    const svg = svgRef.current;
+    if (!svg) return null;
+    const rect = svg.getBoundingClientRect();
+    const x = ((clientX - rect.left) / rect.width) * (VB.w + PAD * 2) - PAD;
+    const y = ((clientY - rect.top) / rect.height) * (VB.h + PAD * 2) - PAD;
+    return { x, y };
+  }
+
+  function hitTest(x: number, y: number) {
+    let best: { id: number; d: number } | null = null;
+    for (let i = 0; i < RAW_POINTS.length; i += 1) {
+      const [px, py] = RAW_POINTS[i];
+      const d = dist(x, y, px, py);
+      if (d <= HIT && (!best || d < best.d)) best = { id: i, d };
+    }
+    return best?.id ?? null;
+  }
+
+  function visit(id: number) {
+    setActiveId(id);
+    const prev = lastId.current;
+    lastId.current = id;
+
+    setVisited((v) => {
+      const nextVisited = new Set(v);
+      nextVisited.add(id);
+
+      setDrawn((d) => {
+        const nextDrawn = new Set(d);
+        if (prev !== null && prev !== id) {
+          const linked = neighbors.get(prev) ?? [];
+          if (linked.includes(id)) nextDrawn.add(edgeKey(prev, id));
+        }
+        for (const [a, b] of EDGES) {
+          if (nextVisited.has(a) && nextVisited.has(b)) {
+            nextDrawn.add(edgeKey(a, b));
+          }
+        }
+        return nextDrawn;
+      });
+
+      return nextVisited;
+    });
+  }
+
+  function scrubAt(clientX: number, clientY: number) {
+    const local = clientToSvg(clientX, clientY);
+    if (!local) return;
+    const id = hitTest(local.x, local.y);
+    if (id !== null) visit(id);
+  }
+
+  function onPointerDown(e: ReactPointerEvent) {
+    if (done || complete) return;
+    drawing.current = true;
+    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+    scrubAt(e.clientX, e.clientY);
+  }
+
+  function onPointerMove(e: ReactPointerEvent) {
+    if (done || complete) return;
+    if (e.pointerType === "mouse" || drawing.current) {
+      scrubAt(e.clientX, e.clientY);
+    }
+  }
+
+  function onPointerUp() {
+    drawing.current = false;
+    lastId.current = null;
+  }
+
+  // Cuando todos los puntos están visitados, cerrar aristas restantes entre vecinos visitados
+  useEffect(() => {
+    if (visited.size < RAW_POINTS.length) return;
+    setDrawn((d) => {
+      const next = new Set(d);
+      for (const [a, b] of EDGES) next.add(edgeKey(a, b));
+      return next;
+    });
+  }, [visited]);
 
   function choose(option: string) {
     if (done || !complete) return;
     setAnswer(option);
     setDone(true);
-    const correct = option === "Un elefante";
-    const exploreScore = scoreFromTime({
-      correct: true,
-      elapsedMs: Date.now() - started.current,
-      idealMs: 40_000,
-      floorMs: 110_000,
-      penalties: mistakes * 20,
-    });
-    const discoveryShare = Math.round(exploreScore * 0.55);
-    const answerShare = correct ? 110 : 0;
-    const score = clampScore(discoveryShare + answerShare);
+    const correct = option === t.elephant.correct;
+    const elapsed = Date.now() - started.current;
+    const breakdown = correct
+      ? scoreFromQualityAndTime(elephantQuality(true), elapsed)
+      : scoreFailed();
     window.setTimeout(
       () =>
         onFinish({
-          score,
-          meta: { edges: TOTAL_EDGES, correct, mistakes, answer: option },
+          score: breakdown.total,
+          meta: {
+            points: visited.size,
+            correct,
+            answer: option,
+            quality: breakdown.quality,
+            time: breakdown.time,
+          },
         }),
       800,
     );
   }
 
-  const silhouetteOpacity = complete ? 0.35 : nextIndex / TOTAL_EDGES * 0.22;
-
   return (
-    <div className="space-y-6">
-      <div className="rounded-[24px] bg-[#eef2fb] p-4 md:p-6">
-        <svg
-          viewBox="0 0 300 230"
-          className="mx-auto h-auto w-full max-w-[400px]"
-          role="img"
-          aria-label="Uní los puntos en orden para descubrir la figura"
-        >
-          {/* Silueta fantasma que gana presencia al conectar */}
-          <path
-            d="M72 108 C48 120 40 155 58 175 C78 150 95 130 108 72 C140 40 200 48 228 96 C250 120 260 145 248 148 C230 160 210 175 190 188 C150 195 130 185 120 178 C100 160 85 140 72 108 Z"
-            fill="#448FF4"
-            fillOpacity={silhouetteOpacity}
-            stroke="#448FF4"
-            strokeOpacity={silhouetteOpacity + 0.15}
-            strokeWidth="2"
-            className="transition-opacity duration-500"
-          />
+    <div className="space-y-5">
+      <p className="text-[15px] leading-relaxed text-[#02043E]/75">{t.elephant.scrubHint}</p>
 
-          {/* Líneas ya unidas */}
-          {connected.length > 1
-            ? connected.slice(0, -1).map((dot, i) => {
-                const next = connected[i + 1];
+      <div className="overflow-hidden rounded-sm bg-[#eef2fb] p-3 sm:p-5 touch-none">
+        <svg
+          ref={svgRef}
+          viewBox={`${-PAD} ${-PAD} ${VB.w + PAD * 2} ${VB.h + PAD * 2}`}
+          className="mx-auto h-auto w-full max-w-[440px] touch-none"
+          style={{ touchAction: "none", cursor: "crosshair" }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerLeave={onPointerUp}
+          onPointerCancel={onPointerUp}
+          role="img"
+          aria-label={t.elephant.scrubHint}
+        >
+          {/* Líneas reveladas (solo las aristas visitadas) */}
+          {!complete
+            ? EDGES.map(([a, b]) => {
+                if (!drawn.has(edgeKey(a, b))) return null;
+                const [x1, y1] = RAW_POINTS[a];
+                const [x2, y2] = RAW_POINTS[b];
                 return (
                   <line
-                    key={`e-${dot.id}`}
-                    x1={dot.x}
-                    y1={dot.y}
-                    x2={next.x}
-                    y2={next.y}
+                    key={edgeKey(a, b)}
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
                     stroke="#023D8F"
-                    strokeWidth="3"
+                    strokeWidth="1.75"
                     strokeLinecap="round"
                   />
                 );
               })
             : null}
 
-          {DOTS.map((dot) => {
-            const reached = dot.id <= nextIndex;
-            const isNext = !complete && dot.id === nextIndex + 1;
-            const isWrong = wrongFlash === dot.id;
-            return (
-              <g key={dot.id}>
-                <circle
-                  cx={dot.x}
-                  cy={dot.y}
-                  r={isNext ? 16 : 13}
-                  fill={isWrong ? "#c45c5c" : reached ? "#448FF4" : "#fff"}
-                  stroke={isNext ? "#023D8F" : "#02043E"}
-                  strokeWidth={isNext ? 3 : 1.5}
-                  className="cursor-pointer"
-                  onClick={() => onDotClick(dot.id)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") onDotClick(dot.id);
-                  }}
-                  aria-label={`Punto ${dot.id + 1}${isNext ? ", siguiente" : ""}`}
+          {/* Contorno SVG completo al terminar */}
+          {complete
+            ? OUTLINE_PATHS.map((d) => (
+                <path
+                  key={d.slice(0, 28)}
+                  d={d}
+                  fill="none"
+                  stroke="#023D8F"
+                  strokeWidth="1.75"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                  className="elephant-outline-in"
                 />
-                <text
-                  x={dot.x}
-                  y={dot.y + 4}
-                  textAnchor="middle"
-                  className="pointer-events-none select-none"
-                  fontSize="11"
-                  fontWeight="600"
-                  fill={reached || isNext ? (isWrong ? "#fff" : reached ? "#fff" : "#023D8F") : "#02043E"}
-                >
-                  {dot.id + 1}
-                </text>
-              </g>
+              ))
+            : null}
+
+          {/* Puntos redondos */}
+          {RAW_POINTS.map(([x, y], id) => {
+            const on = visited.has(id);
+            const isActive = activeId === id;
+            return (
+              <circle
+                key={id}
+                cx={x}
+                cy={y}
+                r={isActive ? 4.5 : on ? 3.5 : 2.5}
+                fill={on ? "#448FF4" : "#fff"}
+                stroke={isActive ? "#023D8F" : on ? "#023D8F" : "rgba(2,4,62,0.4)"}
+                strokeWidth={isActive ? 2 : 1.4}
+                className="pointer-events-none"
+              />
             );
           })}
+
+          {/* Ojito solo al completar */}
+          {complete ? (
+            <circle
+              cx={EYE.cx}
+              cy={EYE.cy}
+              r={EYE.r}
+              fill="#02043E"
+              className="elephant-eye-in"
+            />
+          ) : null}
         </svg>
         <p className="mt-3 text-center text-sm text-[#02043E]/55">
-          Trazos: {Math.max(0, nextIndex)}/{TOTAL_EDGES}
-          {mistakes > 0 ? ` · errores: ${mistakes}` : ""}
+          {t.elephant.revealed}: {visited.size}/{RAW_POINTS.length}
         </p>
       </div>
 
-      {lastReveal && nextIndex > 0 ? (
-        <p className="text-[15px] leading-relaxed text-[#02043E]/80" role="status">
-          <span className="font-medium" style={{ color: "#448FF4" }}>
-            {lastReveal.label}
-          </span>
-          : un sabio dice que es {lastReveal.simile}.
-        </p>
-      ) : (
-        <p className="text-[15px] text-[#02043E]/55">
-          Empezá en el 1 y uní los puntos en orden. Cada trazo revela una perspectiva.
-        </p>
-      )}
-
       {complete ? (
         <div className="space-y-3">
-          <p className="font-medium">¿Qué es el conjunto?</p>
+          <p className="font-medium">{t.elephant.question}</p>
           <div className="grid gap-2 sm:grid-cols-2">
-            {OPTIONS.map((option) => {
+            {t.elephant.options.map((option) => {
               const selected = answer === option;
-              const correct = option === "Un elefante";
-              let tone = "border-[#02043E]/12 bg-white hover:border-[#448FF4]";
+              const correct = option === t.elephant.correct;
+              let tone = "border-[#02043E]/15 bg-white hover:border-[#448FF4]";
               if (done && correct) tone = "border-[#448FF4] bg-[#448FF4]/15";
               if (done && selected && !correct) {
                 tone = "border-[#02043E]/10 bg-[#02043E]/05 opacity-50";
@@ -193,7 +304,7 @@ export function ElephantGame({ onFinish }: Props) {
                   type="button"
                   disabled={done}
                   onClick={() => choose(option)}
-                  className={`rounded-2xl border px-4 py-3 text-left text-[15px] transition-colors ${tone}`}
+                  className={`min-h-12 rounded-sm border px-4 py-3 text-left text-[15px] transition-colors ${tone}`}
                 >
                   {option}
                 </button>

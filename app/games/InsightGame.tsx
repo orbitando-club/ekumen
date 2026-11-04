@@ -1,86 +1,369 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { Button } from "@/app/components/Button";
+import { useLocale } from "@/app/lib/i18n/LocaleProvider";
 import type { GameResult } from "@/app/lib/types";
-import { scoreFromTime } from "@/app/lib/scoring";
+import { insightQuality, scoreFromQualityAndTime } from "@/app/lib/scoring";
 
-/** Clásico de pensamiento lateral: la respuesta no es “recorrer el perímetro”. */
-const CORRECT = 4;
+const COLS = 3;
+const GAP = 56;
+const ORIGIN = 48;
+const PAD = 48;
+const VIEW = ORIGIN * 2 + GAP * 2 + PAD * 2;
+const GRID0 = PAD + ORIGIN;
+
+const DOTS = [0, 1, 2].flatMap((row) =>
+  [0, 1, 2].map((col) => ({
+    id: row * COLS + col,
+    x: GRID0 + col * GAP,
+    y: GRID0 + row * GAP,
+  })),
+);
+
+/** Solución clásica (solo se muestra si usó más de 4 líneas). */
+const SOLUTION: { x: number; y: number }[] = [
+  { x: GRID0, y: GRID0 + 2 * GAP },
+  { x: GRID0 + 3 * GAP, y: GRID0 + 2 * GAP },
+  { x: GRID0, y: GRID0 - GAP },
+  { x: GRID0, y: GRID0 + 2 * GAP },
+  { x: GRID0 + 2 * GAP, y: GRID0 },
+];
+
+const HIT_R = 18;
+const ANCHOR_HIT = 14;
+const MAX_LINES = 4;
+
+type Pt = { x: number; y: number };
 
 type Props = {
   onFinish: (result: GameResult) => void;
 };
 
+function dist(a: Pt, b: Pt) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function pointNearSegment(p: Pt, a: Pt, b: Pt, radius: number) {
+  const abx = b.x - a.x;
+  const aby = b.y - a.y;
+  const len2 = abx * abx + aby * aby;
+  if (len2 === 0) return dist(p, a) <= radius;
+  let t = ((p.x - a.x) * abx + (p.y - a.y) * aby) / len2;
+  t = Math.max(0, Math.min(1, t));
+  const proj = { x: a.x + t * abx, y: a.y + t * aby };
+  return dist(p, proj) <= radius;
+}
+
+function hitsForSegment(a: Pt, b: Pt) {
+  return DOTS.filter(
+    (dot) => dist(a, dot) <= HIT_R || dist(b, dot) <= HIT_R || pointNearSegment(dot, a, b, HIT_R),
+  ).map((d) => d.id);
+}
+
+function hitsFromAnchors(anchors: Pt[]) {
+  const ids = new Set<number>();
+  for (let i = 1; i < anchors.length; i += 1) {
+    hitsForSegment(anchors[i - 1], anchors[i]).forEach((id) => ids.add(id));
+  }
+  return ids;
+}
+
 export function InsightGame({ onFinish }: Props) {
+  const { t } = useLocale();
   const started = useRef(Date.now());
-  const [guess, setGuess] = useState("");
-  const [wrong, setWrong] = useState(0);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const finished = useRef(false);
+
+  const [anchors, setAnchors] = useState<Pt[]>([]);
+  const [cursor, setCursor] = useState<Pt | null>(null);
+  const [hit, setHit] = useState<Set<number>>(new Set());
   const [solved, setSolved] = useState(false);
+  const [showSolution, setShowSolution] = useState(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [attempts, setAttempts] = useState(0);
+
+  const lineCount = Math.max(0, anchors.length - 1);
 
   useEffect(() => {
     started.current = Date.now();
   }, []);
 
-  function submit(e: FormEvent) {
-    e.preventDefault();
-    const value = Number(guess.trim());
-    if (!Number.isFinite(value)) {
-      setFeedback("Ingresá un número.");
-      return;
-    }
-    if (value === CORRECT) {
-      setSolved(true);
-      setFeedback(
-        "¡Insight! Con cuatro líneas rectas se pueden unir los nueve puntos si salís del marco que parece “obvio”.",
-      );
-      const score = scoreFromTime({
-        correct: true,
-        elapsedMs: Date.now() - started.current,
-        idealMs: 40_000,
-        floorMs: 120_000,
-        penalties: wrong * 35,
-      });
-      window.setTimeout(() => onFinish({ score, meta: { wrong, answer: CORRECT } }), 900);
-      return;
-    }
-    setWrong((n) => n + 1);
-    setFeedback(
-      wrong === 0
-        ? "Todavía no. ¿Estás asumiendo que no podés salir del cuadrado imaginario?"
-        : "Seguí cuestionando el enfoque. A veces la solución está fuera del marco.",
-    );
+  const syncHits = useCallback((next: Pt[]) => {
+    setHit(hitsFromAnchors(next));
+  }, []);
+
+  function clientToSvg(clientX: number, clientY: number): Pt | null {
+    const svg = svgRef.current;
+    if (!svg) return null;
+    const rect = svg.getBoundingClientRect();
+    return {
+      x: ((clientX - rect.left) / rect.width) * VIEW,
+      y: ((clientY - rect.top) / rect.height) * VIEW,
+    };
   }
 
+  const complete = useCallback(
+    (lines: number, attemptCount: number) => {
+      if (finished.current) return;
+      finished.current = true;
+      setSolved(true);
+      setCursor(null);
+      const usedMoreThanFour = lines > MAX_LINES;
+      setShowSolution(usedMoreThanFour);
+      setFeedback(usedMoreThanFour ? t.insight.tooMany : t.insight.success);
+      const { total, quality, time } = scoreFromQualityAndTime(
+        insightQuality(lines),
+        Date.now() - started.current,
+      );
+      window.setTimeout(
+        () =>
+          onFinish({
+            score: total,
+            meta: { lines, attempts: attemptCount, optimal: !usedMoreThanFour, quality, time },
+          }),
+        usedMoreThanFour ? 2400 : 1400,
+      );
+    },
+    [onFinish, t.insight.success, t.insight.tooMany],
+  );
+
+  function placeAnchor(pt: Pt) {
+    setAnchors((prev) => {
+      const next = [...prev, pt];
+      const hits = hitsFromAnchors(next);
+      setHit(hits);
+      const lines = Math.max(0, next.length - 1);
+      // Autocomplete solo si cerró los 9 con 4 líneas o menos
+      if (hits.size >= 9 && lines <= MAX_LINES) {
+        window.setTimeout(() => complete(lines, attempts), 0);
+      }
+      return next;
+    });
+    setFeedback(null);
+  }
+
+  function removeFromAnchorIndex(index: number) {
+    if (solved) return;
+    setAnchors((prev) => {
+      const next = prev.slice(0, index);
+      syncHits(next);
+      return next;
+    });
+    setFeedback(null);
+  }
+
+  function undoLastAnchor() {
+    if (solved) return;
+    setAnchors((prev) => {
+      const next = prev.slice(0, -1);
+      syncHits(next);
+      return next;
+    });
+    setFeedback(null);
+  }
+
+  function clearAll() {
+    if (solved) return;
+    setAnchors([]);
+    setHit(new Set());
+    setCursor(null);
+    setFeedback(null);
+  }
+
+  function onPointerDown(e: ReactPointerEvent) {
+    if (solved) return;
+    e.preventDefault();
+    const pt = clientToSvg(e.clientX, e.clientY);
+    if (!pt) return;
+
+    for (let i = anchors.length - 1; i >= 0; i -= 1) {
+      if (dist(pt, anchors[i]) <= ANCHOR_HIT) {
+        removeFromAnchorIndex(i);
+        return;
+      }
+    }
+
+    const tappedDot = DOTS.find((d) => dist(pt, d) <= HIT_R + 4);
+    if (tappedDot && hit.has(tappedDot.id) && anchors.length >= 2) {
+      for (let i = anchors.length - 1; i >= 1; i -= 1) {
+        const ids = hitsForSegment(anchors[i - 1], anchors[i]);
+        if (ids.includes(tappedDot.id)) {
+          removeFromAnchorIndex(i);
+          return;
+        }
+      }
+    }
+
+    placeAnchor(pt);
+  }
+
+  function onPointerMove(e: ReactPointerEvent) {
+    if (solved) return;
+    setCursor(clientToSvg(e.clientX, e.clientY));
+  }
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (solved) return;
+      if (e.key === "Backspace" || e.key === "Delete") {
+        e.preventDefault();
+        undoLastAnchor();
+      }
+      if (e.key === "Escape") clearAll();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [solved]);
+
+  function check() {
+    if (solved) return;
+    if (hit.size < 9) {
+      setAttempts((n) => n + 1);
+      setFeedback(t.insight.needAll);
+      return;
+    }
+    // Con más de 4 líneas también puede cerrar, pero mostramos una forma más directa
+    complete(lineCount, attempts);
+  }
+
+  const solutionPath = SOLUTION.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+  const preview =
+    !solved && anchors.length > 0 && cursor
+      ? { a: anchors[anchors.length - 1], b: cursor }
+      : null;
+  const userOpacity = solved ? 0.28 : 1;
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col items-center gap-4 rounded-[24px] bg-[#eef2fb] p-6 md:p-8">
-        <NineDots />
-        <p className="max-w-md text-center text-[15px] leading-relaxed text-[#02043E]/75">
-          ¿Cuál es el <strong>mínimo</strong> de líneas rectas continuas (sin levantar el lápiz) para
-          unir los nueve puntos?
-        </p>
+    <div className="space-y-5">
+      <p className="text-[15px] leading-relaxed text-[#02043E]/75">{t.insight.hint}</p>
+      <p className="text-sm text-[#02043E]/50">{t.insight.undoHint}</p>
+
+      <div className="rounded-sm bg-[#eef2fb] p-3 sm:p-6 touch-none">
+        <svg
+          ref={svgRef}
+          viewBox={`0 0 ${VIEW} ${VIEW}`}
+          className="mx-auto h-auto w-full max-w-[min(100%,420px)] cursor-crosshair touch-none"
+          style={{ touchAction: "none" }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerLeave={() => setCursor(null)}
+          role="img"
+          aria-label={t.insight.hint}
+        >
+          <rect
+            x={GRID0 - 12}
+            y={GRID0 - 12}
+            width={GAP * 2 + 24}
+            height={GAP * 2 + 24}
+            fill="none"
+            stroke="rgba(2,4,62,0.06)"
+            strokeWidth="1"
+          />
+
+          <g opacity={userOpacity} style={{ transition: "opacity 400ms ease" }}>
+            {anchors.length > 1
+              ? anchors.slice(0, -1).map((a, i) => (
+                  <line
+                    key={`seg-${i}`}
+                    x1={a.x}
+                    y1={a.y}
+                    x2={anchors[i + 1].x}
+                    y2={anchors[i + 1].y}
+                    stroke="#2B65E7"
+                    strokeWidth="3"
+                    strokeLinecap="square"
+                  />
+                ))
+              : null}
+
+            {preview ? (
+              <line
+                x1={preview.a.x}
+                y1={preview.a.y}
+                x2={preview.b.x}
+                y2={preview.b.y}
+                stroke="#2B65E7"
+                strokeWidth="2"
+                strokeDasharray="6 5"
+                strokeOpacity="0.45"
+                strokeLinecap="square"
+              />
+            ) : null}
+
+            {anchors.map((a, i) => (
+              <circle
+                key={`anchor-${i}`}
+                cx={a.x}
+                cy={a.y}
+                r={i === anchors.length - 1 ? 5 : 3.5}
+                fill="#023D8F"
+                stroke="#fff"
+                strokeWidth="1.5"
+                className="pointer-events-none"
+              />
+            ))}
+          </g>
+
+          {showSolution ? (
+            <path
+              d={solutionPath}
+              fill="none"
+              stroke="#023D8F"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray="10 6"
+              opacity="0.9"
+            />
+          ) : null}
+
+          {DOTS.map((dot) => {
+            const active = hit.has(dot.id);
+            return (
+              <circle
+                key={dot.id}
+                cx={dot.x}
+                cy={dot.y}
+                r={active ? 9 : 7}
+                fill={active ? "#2B65E7" : "#fff"}
+                stroke={active ? "#023D8F" : "rgba(2,4,62,0.35)"}
+                strokeWidth={active ? 2.5 : 1.75}
+                className="pointer-events-none"
+              />
+            );
+          })}
+        </svg>
       </div>
 
-      <form onSubmit={submit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <label className="flex flex-1 flex-col gap-2 text-sm">
-          <span className="font-medium">Tu respuesta</span>
-          <input
-            type="number"
-            inputMode="numeric"
-            min={0}
-            value={guess}
-            disabled={solved}
-            onChange={(e) => setGuess(e.target.value)}
-            className="rounded-2xl border border-[#02043E]/15 bg-white px-4 py-3 text-base outline-none focus:border-[#2B65E7]"
-            placeholder="Número de líneas"
-          />
-        </label>
-        <Button type="submit" disabled={solved || !guess.trim()}>
-          Comprobar
-        </Button>
-      </form>
+      <div className="flex flex-wrap items-center gap-3 text-sm text-[#02043E]/60">
+        <span>
+          {t.insight.dots}: {hit.size}/9
+        </span>
+      </div>
+
+      {!solved ? (
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <Button type="button" onClick={check} className="w-full sm:w-auto">
+            {t.insight.check}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={clearAll}
+            disabled={anchors.length === 0}
+            className="w-full sm:w-auto"
+          >
+            {t.insight.clear}
+          </Button>
+        </div>
+      ) : null}
 
       {feedback ? (
         <p
@@ -90,22 +373,10 @@ export function InsightGame({ onFinish }: Props) {
           {feedback}
         </p>
       ) : null}
-      {wrong > 0 && !solved ? (
-        <p className="text-sm text-[#02043E]/45">Intentos fallidos: {wrong}</p>
+
+      {showSolution ? (
+        <p className="text-sm font-medium text-[#023D8F]">{t.insight.solutionTitle}</p>
       ) : null}
     </div>
-  );
-}
-
-function NineDots() {
-  const dots = [0, 1, 2].flatMap((row) =>
-    [0, 1, 2].map((col) => ({ cx: 40 + col * 56, cy: 40 + row * 56 })),
-  );
-  return (
-    <svg viewBox="0 0 192 192" className="h-44 w-44" role="img" aria-label="Nueve puntos en una grilla">
-      {dots.map((dot, i) => (
-        <circle key={i} cx={dot.cx} cy={dot.cy} r="8" fill="#2B65E7" />
-      ))}
-    </svg>
   );
 }
