@@ -5,27 +5,33 @@ import { Button } from "@/app/components/Button";
 import type { GameResult } from "@/app/lib/types";
 import { scoreFromTime } from "@/app/lib/scoring";
 
-type Person = "Ana" | "Bruno" | "Carla";
-type Role = "Dev" | "Design" | "PM";
+type Person = "Ana" | "Bruno" | "Carla" | "Diego";
+type Role = "Dev" | "Design" | "PM" | "QA";
 
-const PEOPLE: Person[] = ["Ana", "Bruno", "Carla"];
-const ROLES: Role[] = ["Dev", "Design", "PM"];
+const PEOPLE: Person[] = ["Ana", "Bruno", "Carla", "Diego"];
+const ROLES: Role[] = ["Dev", "Design", "PM", "QA"];
 
-/** Solución: Ana=Design, Bruno=PM, Carla=Dev */
+/**
+ * Solución:
+ * Ana=Design, Bruno=PM, Carla=Dev, Diego=QA
+ */
 const SOLUTION: Record<Person, Role> = {
   Ana: "Design",
   Bruno: "PM",
   Carla: "Dev",
+  Diego: "QA",
 };
 
 const CLUES = [
-  "Ana no es Dev.",
-  "Bruno no es Design.",
-  "Quien es PM no es Ana.",
-  "Carla no es PM.",
+  "Ana no es Dev ni QA.",
+  "Bruno no es Design, ni Dev, ni QA.",
+  "Quien es PM no es Ana ni Carla.",
+  "Carla no es PM ni QA.",
+  "Diego no es Dev ni Design.",
+  "El rol de Design no es de Bruno ni de Diego.",
 ];
 
-const EXTRA_HINT = "Carla es Dev. Con eso el resto encaja por eliminación.";
+const EXTRA_HINT = "Carla es Dev y Diego es QA. Con eso el resto encaja por eliminación.";
 
 type Props = {
   onFinish: (result: GameResult) => void;
@@ -37,6 +43,7 @@ export function LogicRiddleGame({ onFinish }: Props) {
     Ana: "",
     Bruno: "",
     Carla: "",
+    Diego: "",
   });
   const [hintsUsed, setHintsUsed] = useState(0);
   const [showExtra, setShowExtra] = useState(false);
@@ -62,7 +69,7 @@ export function LogicRiddleGame({ onFinish }: Props) {
       return;
     }
     const roles = PEOPLE.map((p) => assignment[p]);
-    if (new Set(roles).size !== 3) {
+    if (new Set(roles).size !== 4) {
       setFeedback("Cada rol solo puede usarse una vez.");
       return;
     }
@@ -76,14 +83,11 @@ export function LogicRiddleGame({ onFinish }: Props) {
     const score = scoreFromTime({
       correct: true,
       elapsedMs: Date.now() - started.current,
-      idealMs: 50_000,
-      floorMs: 150_000,
+      idealMs: 70_000,
+      floorMs: 180_000,
       penalties: hintsUsed * 40,
     });
-    window.setTimeout(
-      () => onFinish({ score, meta: { hintsUsed } }),
-      900,
-    );
+    window.setTimeout(() => onFinish({ score, meta: { hintsUsed } }), 900);
   }
 
   function takeHint() {

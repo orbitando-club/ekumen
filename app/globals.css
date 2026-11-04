@@ -35,12 +35,28 @@ body {
   outline-offset: 3px;
 }
 
+.facet-base {
+  transition: opacity 420ms ease-out, filter 420ms ease-out;
+}
+
+.facet-pending {
+  opacity: 0.18;
+  filter: grayscale(1);
+}
+
+.facet-won {
+  opacity: 1;
+  filter: grayscale(0);
+}
+
 @keyframes facet-in {
   from {
-    opacity: 0;
+    opacity: 0.18;
+    filter: grayscale(1);
   }
   to {
     opacity: 1;
+    filter: grayscale(0);
   }
 }
 
@@ -48,7 +64,7 @@ body {
   animation: facet-in 420ms ease-out;
 }
 
-@keyframes mark-fade {
+@keyframes mark-fade-won {
   from {
     opacity: 0;
   }
@@ -57,9 +73,23 @@ body {
   }
 }
 
-.mark-stagger polygon {
+@keyframes mark-fade-pending {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.18;
+  }
+}
+
+.mark-stagger .facet-won {
   opacity: 0;
-  animation: mark-fade 500ms ease-out forwards;
+  animation: mark-fade-won 500ms ease-out forwards;
+}
+
+.mark-stagger .facet-pending {
+  opacity: 0;
+  animation: mark-fade-pending 500ms ease-out forwards;
 }
 
 .mark-stagger polygon:nth-of-type(1) {
@@ -76,9 +106,21 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .facet-base {
+    transition: none;
+  }
+
   .facet-in,
-  .mark-stagger polygon {
+  .mark-stagger .facet-won,
+  .mark-stagger .facet-pending {
     animation: none;
+  }
+
+  .mark-stagger .facet-won {
     opacity: 1;
+  }
+
+  .mark-stagger .facet-pending {
+    opacity: 0.18;
   }
 }

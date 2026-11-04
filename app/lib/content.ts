@@ -54,7 +54,7 @@ export const axes: AxisContent[] = [
       "Mientras tanto, vos también podés intentar descubrirlo.",
     ],
     gamePrompt:
-      "Pasá el mouse o tocá las distintas partes para descubrir qué percibe cada sabio. Cuando explores las seis, respondé qué es el conjunto.",
+      "Uní los puntos en orden para ir descubriendo la figura. Cada trazo revela lo que percibe un sabio; al final, respondé qué es el conjunto.",
     closing:
       "Cada perspectiva revela una parte de la realidad, pero ninguna alcanza por sí sola para comprender el conjunto. Para construir una visión más completa, necesitamos integrar las experiencias, los conocimientos y las perspectivas de los demás. Aprender y trabajar en conjunto no es algo accesorio: es parte esencial de nuestra forma de hacer las cosas.",
     values: [

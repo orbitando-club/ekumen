@@ -1,55 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/app/components/Button";
 import type { GameResult } from "@/app/lib/types";
 import { clampScore, scoreFromTime } from "@/app/lib/scoring";
 
-type PartId = "side" | "tusk" | "trunk" | "leg" | "ear" | "tail";
-
-const PARTS: {
-  id: PartId;
-  label: string;
-  simile: string;
-  path: string;
-}[] = [
-  {
-    id: "side",
-    label: "Costado",
-    simile: "como una pared",
-    path: "M120 90 H210 V150 H120 Z",
-  },
-  {
-    id: "tusk",
-    label: "Colmillo",
-    simile: "como una lanza",
-    path: "M78 128 L42 158 L52 164 L88 132 Z",
-  },
-  {
-    id: "trunk",
-    label: "Trompa",
-    simile: "como una serpiente",
-    path: "M70 100 C40 110 28 150 48 175 C58 160 62 140 78 120 Z",
-  },
-  {
-    id: "leg",
-    label: "Pata",
-    simile: "como un árbol",
-    path: "M150 150 H178 V210 H150 Z",
-  },
-  {
-    id: "ear",
-    label: "Oreja",
-    simile: "como un abanico",
-    path: "M118 70 C150 40 200 55 205 95 C175 100 140 100 118 88 Z",
-  },
-  {
-    id: "tail",
-    label: "Cola",
-    simile: "como una cuerda",
-    path: "M210 120 C235 125 248 145 252 168 L242 170 C238 150 228 135 210 130 Z",
-  },
+/** Unir puntos en orden: cada trazo revela lo que “ve” un sabio. */
+const DOTS = [
+  { id: 0, x: 72, y: 108, label: "Trompa", simile: "como una serpiente" },
+  { id: 1, x: 108, y: 72, label: "Oreja", simile: "como un abanico" },
+  { id: 2, x: 168, y: 58, label: "Cabeza", simile: "como una piedra redonda" },
+  { id: 3, x: 228, y: 96, label: "Costado", simile: "como una pared" },
+  { id: 4, x: 248, y: 148, label: "Cola", simile: "como una cuerda" },
+  { id: 5, x: 190, y: 188, label: "Pata", simile: "como un árbol" },
+  { id: 6, x: 120, y: 178, label: "Colmillo", simile: "como una lanza" },
 ];
+
+const TOTAL_EDGES = DOTS.length - 1;
 
 const OPTIONS = ["Una pared", "Un elefante", "Seis animales distintos", "Una serpiente"];
 
@@ -59,8 +25,10 @@ type Props = {
 
 export function ElephantGame({ onFinish }: Props) {
   const started = useRef(Date.now());
-  const [found, setFound] = useState<Set<PartId>>(new Set());
-  const [active, setActive] = useState<PartId | null>(null);
+  const [nextIndex, setNextIndex] = useState(0);
+  const [wrongFlash, setWrongFlash] = useState<number | null>(null);
+  const [mistakes, setMistakes] = useState(0);
+  const [lastReveal, setLastReveal] = useState<(typeof DOTS)[number] | null>(null);
   const [answer, setAnswer] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
@@ -68,24 +36,34 @@ export function ElephantGame({ onFinish }: Props) {
     started.current = Date.now();
   }, []);
 
-  const allFound = found.size === PARTS.length;
+  const complete = nextIndex >= DOTS.length - 1;
+  const connected = DOTS.slice(0, nextIndex + 1);
 
-  function discover(id: PartId) {
-    setActive(id);
-    setFound((prev) => new Set(prev).add(id));
+  function onDotClick(id: number) {
+    if (done || complete) return;
+    if (id === nextIndex + 1) {
+      setNextIndex(id);
+      setLastReveal(DOTS[id]);
+      setWrongFlash(null);
+      return;
+    }
+    if (id === nextIndex) return;
+    setMistakes((n) => n + 1);
+    setWrongFlash(id);
+    window.setTimeout(() => setWrongFlash(null), 350);
   }
 
   function choose(option: string) {
-    if (done || !allFound) return;
+    if (done || !complete) return;
     setAnswer(option);
     setDone(true);
     const correct = option === "Un elefante";
     const exploreScore = scoreFromTime({
       correct: true,
       elapsedMs: Date.now() - started.current,
-      idealMs: 35_000,
-      floorMs: 100_000,
-      penalties: 0,
+      idealMs: 40_000,
+      floorMs: 110_000,
+      penalties: mistakes * 20,
     });
     const discoveryShare = Math.round(exploreScore * 0.55);
     const answerShare = correct ? 110 : 0;
@@ -94,62 +72,110 @@ export function ElephantGame({ onFinish }: Props) {
       () =>
         onFinish({
           score,
-          meta: { parts: found.size, correct, answer: option },
+          meta: { edges: TOTAL_EDGES, correct, mistakes, answer: option },
         }),
       800,
     );
   }
 
+  const silhouetteOpacity = complete ? 0.35 : nextIndex / TOTAL_EDGES * 0.22;
+
   return (
     <div className="space-y-6">
       <div className="rounded-[24px] bg-[#eef2fb] p-4 md:p-6">
         <svg
-          viewBox="0 0 280 230"
-          className="mx-auto h-auto w-full max-w-[360px]"
+          viewBox="0 0 300 230"
+          className="mx-auto h-auto w-full max-w-[400px]"
           role="img"
-          aria-label="Silueta interactiva: tocá cada parte"
+          aria-label="Uní los puntos en orden para descubrir la figura"
         >
-          <ellipse cx="155" cy="125" rx="78" ry="48" fill="#d7e4fb" />
-          <circle cx="95" cy="105" r="42" fill="#d7e4fb" />
-          {PARTS.map((part) => {
-            const isFound = found.has(part.id);
-            const isActive = active === part.id;
+          {/* Silueta fantasma que gana presencia al conectar */}
+          <path
+            d="M72 108 C48 120 40 155 58 175 C78 150 95 130 108 72 C140 40 200 48 228 96 C250 120 260 145 248 148 C230 160 210 175 190 188 C150 195 130 185 120 178 C100 160 85 140 72 108 Z"
+            fill="#448FF4"
+            fillOpacity={silhouetteOpacity}
+            stroke="#448FF4"
+            strokeOpacity={silhouetteOpacity + 0.15}
+            strokeWidth="2"
+            className="transition-opacity duration-500"
+          />
+
+          {/* Líneas ya unidas */}
+          {connected.length > 1
+            ? connected.slice(0, -1).map((dot, i) => {
+                const next = connected[i + 1];
+                return (
+                  <line
+                    key={`e-${dot.id}`}
+                    x1={dot.x}
+                    y1={dot.y}
+                    x2={next.x}
+                    y2={next.y}
+                    stroke="#023D8F"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                );
+              })
+            : null}
+
+          {DOTS.map((dot) => {
+            const reached = dot.id <= nextIndex;
+            const isNext = !complete && dot.id === nextIndex + 1;
+            const isWrong = wrongFlash === dot.id;
             return (
-              <path
-                key={part.id}
-                d={part.path}
-                fill={isFound ? "#448FF4" : "#b7c9e8"}
-                fillOpacity={isActive ? 1 : isFound ? 0.85 : 0.55}
-                stroke="#023D8F"
-                strokeWidth={isActive ? 2.5 : 1.5}
-                className="cursor-pointer transition-opacity"
-                onMouseEnter={() => discover(part.id)}
-                onFocus={() => discover(part.id)}
-                onClick={() => discover(part.id)}
-                tabIndex={0}
-                role="button"
-                aria-label={`${part.label}: ${part.simile}`}
-              />
+              <g key={dot.id}>
+                <circle
+                  cx={dot.x}
+                  cy={dot.y}
+                  r={isNext ? 16 : 13}
+                  fill={isWrong ? "#c45c5c" : reached ? "#448FF4" : "#fff"}
+                  stroke={isNext ? "#023D8F" : "#02043E"}
+                  strokeWidth={isNext ? 3 : 1.5}
+                  className="cursor-pointer"
+                  onClick={() => onDotClick(dot.id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") onDotClick(dot.id);
+                  }}
+                  aria-label={`Punto ${dot.id + 1}${isNext ? ", siguiente" : ""}`}
+                />
+                <text
+                  x={dot.x}
+                  y={dot.y + 4}
+                  textAnchor="middle"
+                  className="pointer-events-none select-none"
+                  fontSize="11"
+                  fontWeight="600"
+                  fill={reached || isNext ? (isWrong ? "#fff" : reached ? "#fff" : "#023D8F") : "#02043E"}
+                >
+                  {dot.id + 1}
+                </text>
+              </g>
             );
           })}
         </svg>
         <p className="mt-3 text-center text-sm text-[#02043E]/55">
-          Descubiertas: {found.size}/{PARTS.length}
+          Trazos: {Math.max(0, nextIndex)}/{TOTAL_EDGES}
+          {mistakes > 0 ? ` · errores: ${mistakes}` : ""}
         </p>
       </div>
 
-      {active ? (
+      {lastReveal && nextIndex > 0 ? (
         <p className="text-[15px] leading-relaxed text-[#02043E]/80" role="status">
           <span className="font-medium" style={{ color: "#448FF4" }}>
-            {PARTS.find((p) => p.id === active)?.label}
+            {lastReveal.label}
           </span>
-          : un sabio dice que es {PARTS.find((p) => p.id === active)?.simile}.
+          : un sabio dice que es {lastReveal.simile}.
         </p>
       ) : (
-        <p className="text-[15px] text-[#02043E]/55">Explorá las seis partes.</p>
+        <p className="text-[15px] text-[#02043E]/55">
+          Empezá en el 1 y uní los puntos en orden. Cada trazo revela una perspectiva.
+        </p>
       )}
 
-      {allFound ? (
+      {complete ? (
         <div className="space-y-3">
           <p className="font-medium">¿Qué es el conjunto?</p>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -158,7 +184,9 @@ export function ElephantGame({ onFinish }: Props) {
               const correct = option === "Un elefante";
               let tone = "border-[#02043E]/12 bg-white hover:border-[#448FF4]";
               if (done && correct) tone = "border-[#448FF4] bg-[#448FF4]/15";
-              if (done && selected && !correct) tone = "border-[#02043E]/10 bg-[#02043E]/05 opacity-50";
+              if (done && selected && !correct) {
+                tone = "border-[#02043E]/10 bg-[#02043E]/05 opacity-50";
+              }
               return (
                 <button
                   key={option}
@@ -173,11 +201,7 @@ export function ElephantGame({ onFinish }: Props) {
             })}
           </div>
         </div>
-      ) : (
-        <Button type="button" disabled variant="secondary">
-          Descubrí las 6 partes para continuar
-        </Button>
-      )}
+      ) : null}
     </div>
   );
 }

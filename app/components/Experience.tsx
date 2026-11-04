@@ -155,7 +155,7 @@ export function Experience() {
 
   return (
     <div className="min-h-full">
-      <header className="mx-auto flex w-full max-w-[1100px] items-center justify-between px-6 py-5">
+      <header className="mx-auto flex w-full max-w-[1100px] items-center justify-between gap-4 px-6 py-5">
         <button
           type="button"
           className="text-ink"
@@ -174,9 +174,18 @@ export function Experience() {
             className={`h-8 text-[28px] transition-opacity ${ready ? "opacity-100" : "opacity-0"}`}
           />
         </button>
-        <span className="text-sm text-[#02043E]/50" suppressHydrationWarning>
-          {ready ? `${done}/4` : "\u00a0"}
-        </span>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-[#02043E]/50" suppressHydrationWarning>
+            {ready ? `${done}/4` : "\u00a0"}
+          </span>
+          <button
+            type="button"
+            onClick={replay}
+            className="rounded-full border border-[#02043E]/15 bg-white px-4 py-2 text-sm font-medium text-[#02043E] transition-colors hover:border-[#02043E]/35"
+          >
+            Reiniciar
+          </button>
+        </div>
       </header>
 
       <main

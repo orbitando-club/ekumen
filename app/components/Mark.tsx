@@ -68,32 +68,25 @@ export function Mark({
             </linearGradient>
           ))}
         </defs>
-        {facets.map((facet) =>
-          shown[facet.id] ? (
+        {facets.map((facet) => {
+          const won = shown[facet.id];
+          return (
             <polygon
               key={facet.id}
               points={facet.points}
               fill={`url(#${rawId}-${facet.id})`}
-              className={animate === facet.id ? "facet-in" : undefined}
+              className={`facet-base ${won ? "facet-won" : "facet-pending"} ${
+                animate === facet.id && won ? "facet-in" : ""
+              }`}
             />
-          ) : (
-            <polygon
-              key={facet.id}
-              points={facet.points}
-              fill="transparent"
-              stroke="rgba(2,4,62,0.22)"
-              strokeWidth="1.25"
-              strokeLinejoin="round"
-              vectorEffect="non-scaling-stroke"
-            />
-          ),
-        )}
+          );
+        })}
         {seams.map((d) => (
           <path
             key={d}
             d={d}
             fill="none"
-            stroke="rgba(2,4,62,0.18)"
+            stroke="rgba(2,4,62,0.12)"
             strokeWidth="1"
             vectorEffect="non-scaling-stroke"
           />

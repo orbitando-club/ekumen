@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
   trailingSlash: true,
   images: { unoptimized: true },
   allowedDevOrigins: ["127.0.0.1", "localhost", "192.168.1.17"],
+  experimental: {
+    agentUpgrade: "security",
+  },
   ...(forPages
     ? {
         basePath: `/${repo}`,
