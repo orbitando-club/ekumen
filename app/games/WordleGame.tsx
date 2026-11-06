@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale } from "@/app/lib/i18n/LocaleProvider";
 import type { GameResult } from "@/app/lib/types";
 import { scoreFailed, scoreFromQualityAndTime, wordleQuality } from "@/app/lib/scoring";
+import { assignWordleWord } from "@/app/lib/wordleWords";
 
-const WORD = "VALOR";
 const MAX_GUESSES = 6;
 const KEYS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 
@@ -42,7 +42,8 @@ type Props = {
 };
 
 export function WordleGame({ onFinish }: Props) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  const [word] = useState(() => assignWordleWord(locale));
   const started = useRef(Date.now());
   const [rows, setRows] = useState<string[]>(Array(MAX_GUESSES).fill(""));
   const [states, setStates] = useState<LetterState[][]>(
@@ -65,7 +66,7 @@ export function WordleGame({ onFinish }: Props) {
       const breakdown = won
         ? scoreFromQualityAndTime(wordleQuality(true, guessesUsed), elapsed)
         : scoreFailed();
-      setMessage(won ? t.wordle.success : t.wordle.fail);
+      setMessage(won ? t.wordle.success : t.wordle.fail.replace("{word}", word));
       window.setTimeout(
         () =>
           onFinish({
@@ -73,7 +74,7 @@ export function WordleGame({ onFinish }: Props) {
             meta: {
               won,
               guessesUsed,
-              word: WORD,
+              word,
               quality: breakdown.quality,
               time: breakdown.time,
             },
@@ -81,7 +82,7 @@ export function WordleGame({ onFinish }: Props) {
         1000,
       );
     },
-    [onFinish, t.wordle.fail, t.wordle.success],
+    [onFinish, t.wordle.fail, t.wordle.success, word],
   );
 
   const submit = useCallback(() => {
@@ -91,7 +92,7 @@ export function WordleGame({ onFinish }: Props) {
       return;
     }
     const guess = current.toUpperCase();
-    const result = scoreGuess(guess, WORD);
+    const result = scoreGuess(guess, word);
     const nextRows = [...rows];
     nextRows[rowIndex] = guess;
     const nextStates = [...states];
@@ -110,7 +111,7 @@ export function WordleGame({ onFinish }: Props) {
       return next;
     });
 
-    if (guess === WORD) {
+    if (guess === word) {
       finish(true, rowIndex + 1);
       return;
     }
@@ -121,7 +122,7 @@ export function WordleGame({ onFinish }: Props) {
     setRowIndex((i) => i + 1);
     setCurrent("");
     setMessage(null);
-  }, [current, done, finish, rowIndex, rows, states, t.wordle.needFive]);
+  }, [current, done, finish, rowIndex, rows, states, t.wordle.needFive, word]);
 
   const onKey = useCallback(
     (key: string) => {

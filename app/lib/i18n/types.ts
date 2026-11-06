@@ -54,6 +54,7 @@ export type Dictionary = {
     scoreLabel: string;
     ekuthonTicket: string;
     ekuthonDetail: string;
+    ekuthonSpoiler: string;
     namePrompt: string;
     namePlaceholder: string;
     submit: string;

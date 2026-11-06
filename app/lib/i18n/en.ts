@@ -38,6 +38,7 @@ export const en: Dictionary = {
     scoreLabel: "Your score",
     ekuthonTicket: "You've got your ticket to Ekuthon",
     ekuthonDetail: "Ekumen's journey is on November 23. See you there.",
+    ekuthonSpoiler: "There's an Ekuthon spoiler on this site. Have you found it yet?",
     namePrompt: "Leave your name for the ranking",
     namePlaceholder: "Your name",
     submit: "Publish to ranking",
@@ -59,7 +60,7 @@ export const en: Dictionary = {
   },
   elephant: {
     scrubHint:
-      "Move your mouse or finger over the outline dots: they connect as you go. When you finish them all, the eye appears and you can answer what it is.",
+      "Move your mouse or finger over the dots: they connect as you go. Once a quarter of them are revealed, you can try to guess. Finish them all and the eye appears.",
     revealed: "Revealed",
     question: "What is the whole?",
     options: ["A wall", "An elephant", "Six different animals", "A snake"],
@@ -87,7 +88,7 @@ export const en: Dictionary = {
   wordle: {
     needFive: "The word has 5 letters.",
     success: "You solved it by iterating: try, read the signal, adjust.",
-    fail: "The word was VALOR. The iterative process still counts.",
+    fail: "The word was {word}. The iterative process still counts.",
   },
   axes: [
     {
@@ -129,7 +130,7 @@ export const en: Dictionary = {
         "Meanwhile, you can try to discover it too.",
       ],
       gamePrompt:
-        "Pass over the outline dots to connect the lines. When you finish them all, the eye appears.",
+        "Pass over the outline dots. At 25% you can already try to guess what it is.",
       closing:
         "Each perspective reveals part of reality, but none alone is enough to understand the whole. We need to integrate others' experiences, knowledge and perspectives.",
       startChallenge: "Start challenge",

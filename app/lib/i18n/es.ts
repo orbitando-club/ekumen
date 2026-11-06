@@ -39,6 +39,7 @@ export const es: Dictionary = {
     scoreLabel: "Tu puntaje",
     ekuthonTicket: "Ya tenés tu entrada para el Ekuthon",
     ekuthonDetail: "El viaje de Ekumen es el 23 de noviembre. Nos vemos ahí.",
+    ekuthonSpoiler: "Hay un spoiler de la Ekuthon en este sitio. ¿Ya lo encontraste?",
     namePrompt: "Dejá tu nombre para el ranking",
     namePlaceholder: "Tu nombre",
     submit: "Publicar en el ranking",
@@ -60,7 +61,7 @@ export const es: Dictionary = {
   },
   elephant: {
     scrubHint:
-      "Pasá el mouse o el dedo por los puntos (extremos de cada línea). Se van uniendo al recorrerlos. Al terminar todos, aparece el ojo y podés responder qué es.",
+      "Pasá el mouse o el dedo por los puntos: se van uniendo al recorrerlos. Cuando revelás un cuarto, ya podés intentar adivinar. Si los completás, aparece el ojo.",
     revealed: "Revelado",
     question: "¿Qué es el conjunto?",
     options: ["Una serpiente", "Un elefante", "Un rinoceronte", "Una araña"],
@@ -88,7 +89,7 @@ export const es: Dictionary = {
   wordle: {
     needFive: "La palabra tiene 5 letras.",
     success: "Lo resolviste iterando: probar, leer la señal, ajustar.",
-    fail: "La palabra era VALOR. Igual, el proceso iterativo cuenta.",
+    fail: "La palabra era {word}. Igual, el proceso iterativo cuenta.",
   },
   axes: [
     {
@@ -130,7 +131,7 @@ export const es: Dictionary = {
         "Mientras tanto, vos también podés intentar descubrirlo.",
       ],
       gamePrompt:
-        "Pasá por los puntos del contorno para ir uniendo las líneas.",
+        "Pasá por los puntos del contorno. Con el 25% ya podés intentar adivinar qué es.",
       closing:
         "Cada perspectiva revela una parte de la realidad, pero ninguna alcanza por sí sola para comprender el conjunto. Para construir una visión más completa, necesitamos integrar las experiencias, los conocimientos y las perspectivas de los demás.",
       startChallenge: "Empezar desafío",

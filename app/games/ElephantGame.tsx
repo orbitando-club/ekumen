@@ -43,6 +43,8 @@ const OUTLINE_PATHS = [
 
 const EYE = { cx: 37.507, cy: 82.5025, r: 7 };
 const HIT = 14;
+/** Con un cuarto de los puntos ya se puede intentar adivinar. */
+const GUESS_AT = Math.ceil(RAW_POINTS.length * 0.25);
 /** Padding para que puntos/trazos no se corten en el borde */
 const PAD = 12;
 const VB = { w: 249, h: 221 };
@@ -85,6 +87,7 @@ export function ElephantGame({ onFinish }: Props) {
 
   const allEdgesDrawn = drawn.size >= EDGES.length;
   const complete = allEdgesDrawn || visited.size >= RAW_POINTS.length;
+  const canGuess = visited.size >= GUESS_AT || complete;
 
   function edgeKey(a: number, b: number) {
     return a < b ? `${a}-${b}` : `${b}-${a}`;
@@ -173,7 +176,7 @@ export function ElephantGame({ onFinish }: Props) {
   }, [visited]);
 
   function choose(option: string) {
-    if (done || !complete) return;
+    if (done || !canGuess) return;
     setAnswer(option);
     setDone(true);
     const correct = option === t.elephant.correct;
@@ -286,7 +289,7 @@ export function ElephantGame({ onFinish }: Props) {
         </p>
       </div>
 
-      {complete ? (
+      {canGuess ? (
         <div className="space-y-3">
           <p className="font-medium">{t.elephant.question}</p>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -304,7 +307,7 @@ export function ElephantGame({ onFinish }: Props) {
                   type="button"
                   disabled={done}
                   onClick={() => choose(option)}
-                  className={`min-h-12 rounded-sm border px-4 py-3 text-left text-[15px] transition-colors ${tone}`}
+                  className={`min-h-12 cursor-pointer rounded-sm border px-4 py-3 text-left text-[15px] transition-colors ${tone}`}
                 >
                   {option}
                 </button>

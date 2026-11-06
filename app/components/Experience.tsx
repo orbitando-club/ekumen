@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AxisScoreGrid, ValueCardList, type AxisScoreItem } from "@/app/components/AxisScoreCard";
 import { Button } from "@/app/components/Button";
 import { Mark } from "@/app/components/Mark";
 import { ProgressBar } from "@/app/components/ProgressBar";
@@ -18,6 +19,7 @@ import {
 } from "@/app/lib/leaderboard";
 import { completedCount, totalScore, useProgress } from "@/app/lib/progress";
 import type { ClusterId, GameResult } from "@/app/lib/types";
+import { clearAssignedWords } from "@/app/lib/wordleWords";
 
 type Phase = "intro" | "axis" | "closing";
 type AxisStep = "story" | "play" | "reveal";
@@ -47,11 +49,25 @@ export function Experience() {
   const [rows, setRows] = useState<LeaderboardRow[]>([]);
   const [configured] = useState(() => isLeaderboardConfigured());
   const [expandedCard, setExpandedCard] = useState<ClusterId | null>(null);
+  const [localeMotion, setLocaleMotion] = useState(false);
 
   const axes = t.axes;
   const axis = axes[axisIndex];
   const done = completedCount(progress);
   const score = totalScore(scores);
+
+  function axisItems(ids?: ClusterId[]): AxisScoreItem[] {
+    return t.axisCards
+      .filter((card) => !ids || ids.includes(card.id))
+      .map((card) => ({
+        id: card.id,
+        emoji: card.emoji,
+        label: card.label,
+        color: card.color,
+        points: scores[card.id],
+        values: axes.find((item) => item.id === card.id)?.values ?? [],
+      }));
+  }
 
   useEffect(() => {
     if (!ready) return;
@@ -63,6 +79,13 @@ export function Experience() {
   useEffect(() => {
     setNameInput(displayName);
   }, [displayName]);
+
+  function changeLocale(next: "es" | "en") {
+    if (next === locale) return;
+    setLocaleMotion(true);
+    setLocale(next);
+    window.setTimeout(() => setLocaleMotion(false), 420);
+  }
 
   function transition(next: () => void) {
     setFade(false);
@@ -96,6 +119,7 @@ export function Experience() {
       transition(() => {
         setPhase("closing");
         setAnimateFacet(null);
+        setExpandedCard(null);
       });
       return;
     }
@@ -145,6 +169,7 @@ export function Experience() {
   }, [phase]);
 
   function replay() {
+    clearAssignedWords();
     reset();
     transition(() => {
       setPhase("intro");
@@ -190,14 +215,14 @@ export function Experience() {
           >
             <span
               aria-hidden
-              className={`pointer-events-none absolute inset-y-0.5 w-[calc(50%-2px)] bg-[#02043E] transition-transform duration-200 ${
+              className={`lang-knob pointer-events-none absolute inset-y-0.5 w-[calc(50%-2px)] bg-[#02043E] ${
                 locale === "en" ? "translate-x-[calc(100%+2px)]" : "translate-x-0"
               }`}
               style={{ left: 2 }}
             />
             <button
               type="button"
-              onClick={() => setLocale("es")}
+              onClick={() => changeLocale("es")}
               className={`relative z-10 min-w-10 px-2.5 text-xs font-semibold tracking-wide transition-colors ${
                 locale === "es" ? "text-white" : "text-[#02043E]/55 hover:text-[#02043E]"
               }`}
@@ -207,7 +232,7 @@ export function Experience() {
             </button>
             <button
               type="button"
-              onClick={() => setLocale("en")}
+              onClick={() => changeLocale("en")}
               className={`relative z-10 min-w-10 px-2.5 text-xs font-semibold tracking-wide transition-colors ${
                 locale === "en" ? "text-white" : "text-[#02043E]/55 hover:text-[#02043E]"
               }`}
@@ -229,7 +254,7 @@ export function Experience() {
       <main
         className={`mx-auto w-full max-w-[1100px] px-4 pb-16 pt-2 sm:px-6 sm:pb-20 sm:pt-4 transition-opacity duration-300 ${
           fade ? "opacity-100" : "opacity-0"
-        }`}
+        } ${localeMotion ? "locale-swap" : ""}`}
       >
         {phase === "intro" ? (
           <section className="grid items-center gap-8 md:grid-cols-[1fr_1.4fr] md:gap-14">
@@ -348,21 +373,15 @@ export function Experience() {
                   <p className="text-[15px] leading-relaxed text-[#02043E]/80 sm:text-[16px]">
                     {axis.closing}
                   </p>
-                  <ul className="space-y-4">
-                    {axis.values.map((value) => (
-                      <li
-                        key={value.name}
-                        className="rounded-sm border border-[#02043E]/08 bg-[#f7f8fc] p-4 sm:p-5"
-                      >
-                        <p className="font-medium" style={{ color: axis.accent }}>
-                          {value.name}
-                        </p>
-                        <p className="mt-1 text-[15px] leading-relaxed text-[#02043E]/75">
-                          {value.line}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
+                  <ValueCardList
+                    items={axis.values.map((value, index) => ({
+                      id: `${axis.id}-${index}`,
+                      name: value.name,
+                      line: value.line,
+                      color: axis.accent,
+                      startOpen: true,
+                    }))}
+                  />
                   <p className="text-sm text-[#02043E]/55">
                     +{scores[axis.id]} {t.ui.axisPoints}
                   </p>
@@ -398,57 +417,14 @@ export function Experience() {
                 </p>
               </div>
 
-              <ul className="mt-8 grid grid-cols-1 gap-2 text-left sm:grid-cols-2">
-                {t.axisCards.map((card) => {
-                  const open = expandedCard === card.id;
-                  const axisValues = axes.find((a) => a.id === card.id)?.values ?? [];
-                  return (
-                    <li key={card.id} className="min-w-0">
-                      <button
-                        type="button"
-                        onClick={() => setExpandedCard(open ? null : card.id)}
-                        aria-expanded={open}
-                        className="flex w-full min-h-[108px] flex-col justify-between p-4 text-left text-white transition-opacity hover:opacity-95 sm:min-h-[120px] sm:p-5"
-                        style={{ background: card.color }}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <span className="text-2xl leading-none" aria-hidden>
-                            {card.emoji}
-                          </span>
-                          <span className="text-lg leading-none text-white/80" aria-hidden>
-                            {open ? "−" : "+"}
-                          </span>
-                        </div>
-                        <div className="mt-4 flex items-end justify-between gap-3">
-                          <span className="text-[11px] font-semibold tracking-[0.08em] uppercase leading-snug sm:text-[12px]">
-                            {card.label}
-                          </span>
-                          <span className="shrink-0 text-sm tabular-nums text-white/85">
-                            {scores[card.id]} {t.ui.pts}
-                          </span>
-                        </div>
-                      </button>
-                      {open ? (
-                        <div
-                          className="space-y-3 border border-t-0 border-[#02043E]/10 bg-white p-4 text-[#02043E]"
-                          style={{ borderColor: `${card.color}55` }}
-                        >
-                          {axisValues.map((value) => (
-                            <div key={value.name}>
-                              <p className="font-semibold" style={{ color: card.color }}>
-                                {value.name}
-                              </p>
-                              <p className="mt-1 text-[14px] leading-relaxed text-[#02043E]/75">
-                                {value.line}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ul>
+              <div className="mt-8">
+                <AxisScoreGrid
+                  items={axisItems()}
+                  pointsSuffix={t.ui.pts}
+                  expandedId={expandedCard}
+                  onToggle={(id) => setExpandedCard(expandedCard === id ? null : id)}
+                />
+              </div>
 
               <div className="mx-auto mt-10 max-w-lg border-t border-[#02043E]/08 pt-8">
                 <p className="text-[22px] font-medium tracking-tight text-[#023D8F] sm:text-[24px]">
@@ -456,6 +432,9 @@ export function Experience() {
                 </p>
                 <p className="mt-2 text-[15px] leading-relaxed text-[#02043E]/70">
                   {t.closing.ekuthonDetail}
+                </p>
+                <p className="mt-4 text-[15px] font-medium leading-relaxed text-[#023D8F]">
+                  {t.closing.ekuthonSpoiler}
                 </p>
               </div>
 
