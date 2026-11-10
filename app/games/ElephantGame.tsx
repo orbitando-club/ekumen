@@ -201,15 +201,17 @@ export function ElephantGame({ onFinish }: Props) {
   }
 
   return (
-    <div className="space-y-5">
-      <p className="text-[15px] leading-relaxed text-[#02043E]/75">{t.elephant.scrubHint}</p>
+    <div className="flex h-full min-h-0 flex-col gap-2">
+      <p className="shrink-0 text-[12px] leading-snug text-[#02043E]/75 sm:text-[13px]">
+        {t.elephant.scrubHint}
+      </p>
 
-      <div className="overflow-hidden rounded-sm bg-[#eef2fb] p-3 sm:p-5 touch-none">
+      <div className="min-h-0 flex-1 overflow-hidden rounded-sm bg-[#eef2fb] p-2 touch-none sm:p-3">
         <svg
           ref={svgRef}
           viewBox={`${-PAD} ${-PAD} ${VB.w + PAD * 2} ${VB.h + PAD * 2}`}
-          className="mx-auto h-auto w-full max-w-[440px] touch-none"
-          style={{ touchAction: "none", cursor: "crosshair" }}
+          className="mx-auto h-full max-h-[min(100%,36dvh)] w-auto max-w-full touch-none"
+          style={{ touchAction: "none", cursor: "crosshair", aspectRatio: `${VB.w} / ${VB.h}` }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -284,15 +286,15 @@ export function ElephantGame({ onFinish }: Props) {
             />
           ) : null}
         </svg>
-        <p className="mt-3 text-center text-sm text-[#02043E]/55">
+        <p className="mt-1.5 text-center text-xs text-[#02043E]/55">
           {t.elephant.revealed}: {visited.size}/{RAW_POINTS.length}
         </p>
       </div>
 
       {canGuess ? (
-        <div className="space-y-3">
-          <p className="font-medium">{t.elephant.question}</p>
-          <div className="grid gap-2 sm:grid-cols-2">
+        <div className="shrink-0 space-y-2">
+          <p className="text-sm font-medium">{t.elephant.question}</p>
+          <div className="grid grid-cols-2 gap-1.5">
             {t.elephant.options.map((option) => {
               const selected = answer === option;
               const correct = option === t.elephant.correct;
@@ -307,7 +309,7 @@ export function ElephantGame({ onFinish }: Props) {
                   type="button"
                   disabled={done}
                   onClick={() => choose(option)}
-                  className={`min-h-12 cursor-pointer rounded-sm border px-4 py-3 text-left text-[15px] transition-colors ${tone}`}
+                  className={`min-h-9 cursor-pointer rounded-sm border px-3 py-2 text-left text-[13px] transition-colors ${tone}`}
                 >
                   {option}
                 </button>

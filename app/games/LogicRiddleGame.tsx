@@ -99,43 +99,48 @@ export function LogicRiddleGame({ onFinish }: Props) {
   const taken = usedRoles();
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-sm bg-[#eef2fb] p-5 md:p-6">
-        <p className="text-sm font-medium tracking-[0.12em] uppercase text-[#775DFD]">
-          {t.riddle.clues}
-        </p>
-        <ul className="mt-3 space-y-2 text-[15px] leading-relaxed text-[#02043E]/80">
+    <div className="flex h-full min-h-0 flex-col gap-2">
+      <div className="shrink-0 rounded-sm bg-[#eef2fb] px-3 py-2.5 sm:px-4 sm:py-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <p className="text-[11px] font-medium tracking-[0.12em] uppercase text-[#775DFD]">
+            {t.riddle.clues}
+          </p>
+          {!showExtra ? (
+            <button
+              type="button"
+              onClick={() => {
+                setShowExtra(true);
+                setHintsUsed((n) => n + 1);
+              }}
+              className="text-[11px] font-medium text-[#775DFD] underline-offset-2 hover:underline"
+            >
+              {t.riddle.extraHintBtn}
+            </button>
+          ) : null}
+        </div>
+        <ul className="mt-1.5 columns-1 gap-x-6 text-[12px] leading-snug text-[#02043E]/80 sm:columns-2 sm:text-[13px]">
           {CLUES[locale].map((clue) => (
-            <li key={clue}>• {clue}</li>
+            <li key={clue} className="mb-1 break-inside-avoid">
+              • {clue}
+            </li>
           ))}
         </ul>
         {showExtra ? (
-          <p className="mt-4 rounded-sm bg-white/80 px-4 py-3 text-[15px] text-[#775DFD]">
+          <p className="mt-2 rounded-sm bg-white/80 px-2.5 py-2 text-[12px] leading-snug text-[#775DFD]">
             {t.riddle.extraHint}
           </p>
-        ) : (
-          <button
-            type="button"
-            onClick={() => {
-              setShowExtra(true);
-              setHintsUsed((n) => n + 1);
-            }}
-            className="mt-4 min-h-11 text-sm font-medium text-[#775DFD] underline-offset-2 hover:underline"
-          >
-            {t.riddle.extraHintBtn}
-          </button>
-        )}
+        ) : null}
       </div>
 
-      <div className="space-y-3">
-        <p className="font-medium">{t.riddle.assign}</p>
+      <div className="min-h-0 flex-1 space-y-1.5 overflow-hidden">
+        <p className="text-xs font-medium sm:text-sm">{t.riddle.assign}</p>
         {PEOPLE.map((person, personIndex) => (
           <div
             key={person}
-            className="flex flex-col gap-2 rounded-sm border border-[#02043E]/10 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
+            className="flex items-center justify-between gap-2 rounded-sm border border-[#02043E]/10 bg-white px-2.5 py-1.5 sm:px-3"
           >
-            <span className="font-medium">{t.riddle.people[personIndex]}</span>
-            <div className="flex flex-wrap gap-2">
+            <span className="shrink-0 text-[13px] font-medium">{t.riddle.people[personIndex]}</span>
+            <div className="flex flex-wrap justify-end gap-1">
               {ROLES.map((role, roleIndex) => {
                 const selected = assignment[person] === role;
                 const blocked = !selected && taken.has(role);
@@ -145,7 +150,7 @@ export function LogicRiddleGame({ onFinish }: Props) {
                     type="button"
                     disabled={solved || blocked}
                     onClick={() => setRole(person, selected ? "" : role)}
-                    className={`min-h-10 rounded-sm px-4 py-2 text-sm transition-colors ${
+                    className={`min-h-8 rounded-sm px-2.5 py-1 text-[12px] transition-colors sm:px-3 ${
                       selected
                         ? "bg-[#775DFD] text-white"
                         : blocked
@@ -162,18 +167,19 @@ export function LogicRiddleGame({ onFinish }: Props) {
         ))}
       </div>
 
-      <Button type="button" onClick={check} disabled={solved} className="w-full sm:w-auto">
-        {t.riddle.check}
-      </Button>
-
-      {feedback ? (
-        <p
-          className={`text-[15px] leading-relaxed ${solved ? "text-[#023D8F]" : "text-[#02043E]/70"}`}
-          role="status"
-        >
-          {feedback}
-        </p>
-      ) : null}
+      <div className="shrink-0 space-y-1.5">
+        <Button type="button" onClick={check} disabled={solved} className="w-full sm:w-auto">
+          {t.riddle.check}
+        </Button>
+        {feedback ? (
+          <p
+            className={`text-[12px] leading-snug ${solved ? "text-[#023D8F]" : "text-[#02043E]/70"}`}
+            role="status"
+          >
+            {feedback}
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }

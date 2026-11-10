@@ -153,13 +153,13 @@ export function WordleGame({ onFinish }: Props) {
   }, [onKey]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col items-center gap-2">
+    <div className="flex h-full min-h-0 flex-col justify-between gap-2">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1">
         {Array.from({ length: MAX_GUESSES }, (_, r) => {
           const letters =
             r === rowIndex && !done ? current.padEnd(5) : (rows[r] || "").padEnd(5);
           return (
-            <div key={r} className="flex gap-1.5 sm:gap-2">
+            <div key={r} className="flex gap-1 sm:gap-1.5">
               {Array.from({ length: 5 }, (_, c) => {
                 const ch = letters[c] === " " ? "" : letters[c];
                 const st =
@@ -169,7 +169,7 @@ export function WordleGame({ onFinish }: Props) {
                 return (
                   <div
                     key={c}
-                    className={`flex h-11 w-11 items-center justify-center rounded-sm border text-lg font-semibold uppercase sm:h-12 sm:w-12 ${cellTone[st]}`}
+                    className={`flex h-8 w-8 items-center justify-center rounded-sm border text-sm font-semibold uppercase sm:h-9 sm:w-9 sm:text-base ${cellTone[st]}`}
                   >
                     {ch}
                   </div>
@@ -181,19 +181,19 @@ export function WordleGame({ onFinish }: Props) {
       </div>
 
       {message ? (
-        <p className="text-center text-[15px] text-[#02043E]/75" role="status">
+        <p className="shrink-0 text-center text-[12px] text-[#02043E]/75 sm:text-[13px]" role="status">
           {message}
         </p>
       ) : null}
 
-      <div className="space-y-2">
+      <div className="shrink-0 space-y-1">
         {KEYS.map((row) => (
-          <div key={row} className="flex justify-center gap-1.5">
+          <div key={row} className="flex justify-center gap-1">
             {row === "ZXCVBNM" ? (
               <button
                 type="button"
                 onClick={() => onKey("ENTER")}
-                className="min-h-11 rounded-lg bg-[#02043E]/08 px-2 py-3 text-[11px] font-medium sm:px-3 sm:text-xs"
+                className="min-h-9 rounded-md bg-[#02043E]/08 px-1.5 py-2 text-[10px] font-medium sm:px-2.5 sm:text-[11px]"
               >
                 ENTER
               </button>
@@ -213,7 +213,7 @@ export function WordleGame({ onFinish }: Props) {
                   key={key}
                   type="button"
                   onClick={() => onKey(key)}
-                  className={`h-11 min-w-7 rounded-lg px-1.5 text-sm font-medium sm:min-w-8 sm:px-2 ${tone}`}
+                  className={`h-9 min-w-6 rounded-md px-1 text-xs font-medium sm:min-w-7 sm:px-1.5 sm:text-sm ${tone}`}
                 >
                   {key}
                 </button>
@@ -223,7 +223,7 @@ export function WordleGame({ onFinish }: Props) {
               <button
                 type="button"
                 onClick={() => onKey("BACKSPACE")}
-                className="min-h-11 rounded-lg bg-[#02043E]/08 px-2 py-3 text-[11px] font-medium sm:px-3 sm:text-xs"
+                className="min-h-9 rounded-md bg-[#02043E]/08 px-1.5 py-2 text-[10px] font-medium sm:px-2.5 sm:text-[11px]"
               >
                 ⌫
               </button>

@@ -241,16 +241,18 @@ export function InsightGame({ onFinish }: Props) {
   const userOpacity = solved ? 0.28 : 1;
 
   return (
-    <div className="space-y-5">
-      <p className="text-[15px] leading-relaxed text-[#02043E]/75">{t.insight.hint}</p>
-      <p className="text-sm text-[#02043E]/50">{t.insight.undoHint}</p>
+    <div className="flex h-full min-h-0 flex-col gap-2">
+      <p className="shrink-0 text-[12px] leading-snug text-[#02043E]/75 sm:text-[13px]">
+        {t.insight.hint}{" "}
+        <span className="text-[#02043E]/50">{t.insight.undoHint}</span>
+      </p>
 
-      <div className="rounded-sm bg-[#eef2fb] p-3 sm:p-6 touch-none">
+      <div className="min-h-0 flex-1 rounded-sm bg-[#eef2fb] p-2 touch-none sm:p-3">
         <svg
           ref={svgRef}
           viewBox={`0 0 ${VIEW} ${VIEW}`}
-          className="mx-auto h-auto w-full max-w-[min(100%,420px)] cursor-crosshair touch-none"
-          style={{ touchAction: "none" }}
+          className="mx-auto h-full max-h-[min(100%,38dvh)] w-auto max-w-full cursor-crosshair touch-none"
+          style={{ touchAction: "none", aspectRatio: "1 / 1" }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerLeave={() => setCursor(null)}
@@ -342,14 +344,14 @@ export function InsightGame({ onFinish }: Props) {
         </svg>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 text-sm text-[#02043E]/60">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 text-xs text-[#02043E]/60">
         <span>
           {t.insight.dots}: {hit.size}/9
         </span>
       </div>
 
       {!solved ? (
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+        <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
           <Button type="button" onClick={check} className="w-full sm:w-auto">
             {t.insight.check}
           </Button>
@@ -367,7 +369,7 @@ export function InsightGame({ onFinish }: Props) {
 
       {feedback ? (
         <p
-          className={`text-[15px] leading-relaxed ${solved ? "text-[#023D8F]" : "text-[#02043E]/70"}`}
+          className={`shrink-0 text-[13px] leading-snug ${solved ? "text-[#023D8F]" : "text-[#02043E]/70"}`}
           role="status"
         >
           {feedback}
@@ -375,7 +377,7 @@ export function InsightGame({ onFinish }: Props) {
       ) : null}
 
       {showSolution ? (
-        <p className="text-sm font-medium text-[#023D8F]">{t.insight.solutionTitle}</p>
+        <p className="shrink-0 text-xs font-medium text-[#023D8F]">{t.insight.solutionTitle}</p>
       ) : null}
     </div>
   );
