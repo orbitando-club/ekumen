@@ -8,18 +8,24 @@ export const es: Dictionary = {
   intro: {
     title: "Ekumen Sandbox",
     headline: "Una estrella polar para decidir juntos",
-    lead: "Los valores funcionan como una estrella polar: una referencia a la que podemos acudir cuando necesitamos resolver situaciones dilemáticas del trabajo cotidiano.",
+    lead: "Los <b>valores</b> funcionan como una estrella polar: una referencia a la cual podemos acudir cuando necesitamos resolver situaciones dilemáticas del trabajo cotidiano.",
     dilemmas: [
-      "¿Priorizamos las soluciones que ya conocemos o generamos espacios para explorar nuevas alternativas, aun cuando el tiempo sea limitado?",
-      "¿Preferimos que una persona coordine la planificación y las estimaciones, o distribuimos esa responsabilidad entre quienes integran el equipo?",
+      "<i>¿Priorizamos las soluciones que ya conocemos, o generamos espacios para explorar nuevas alternativas, aun cuando el tiempo sea limitado?</i>",
+      "<i>¿Preferimos que una persona coordine la planificación y las estimaciones, o distribuimos esa responsabilidad entre quienes integran el equipo?</i>",
     ],
     bridge:
-      "Cuando nos cuesta ponernos de acuerdo sobre estas u otras cuestiones, contamos con principios que orientan nuestras decisiones y nuestra forma de relacionarnos.",
+      "Cuando nos cuesta ponernos de acuerdo sobre estas u otras cuestiones, contamos con principios que orientan nuestras decisiones y forma de relacionarnos.",
     question: "Pero ¿cuáles son esos principios?",
     setup:
-      "Nuestros ocho valores se organizan en torno a cuatro dimensiones clave: cómo pensamos, cómo trabajamos, cómo hacemos que las cosas sucedan y cómo generamos valor agregado.",
+      "Nuestros <b>ocho valores</b> se organizan en torno a <b>cuatro dimensiones</b> clave:",
+    dimensions: [
+      "Cómo pensamos",
+      "Cómo trabajamos",
+      "Cómo hacemos que las cosas sucedan",
+      "Cómo generamos valor agregado",
+    ],
     ekuthon:
-      "Este sandbox es la antesala del Ekuthon: el viaje de Ekumen el 23 de noviembre.",
+      "",
     cta: "Vamos a explorarlos",
   },
   ui: {
@@ -48,8 +54,8 @@ export const es: Dictionary = {
     replay: "Volver a jugar",
   },
   insight: {
-    hint: "Tocá para ir eligiendo anclas: se dibujan líneas rectas entre ellas.",
-    undoHint: "Tocá una ancla (o un punto iluminado) para des-anclar desde ahí. También Backspace / Supr.",
+    hint: "Hacé click para empezar o terminar de dibujar una línea.",
+    undoHint: "",
     lines: "Líneas",
     dots: "Puntos",
     check: "Comprobar",
@@ -57,7 +63,7 @@ export const es: Dictionary = {
     needAll: "Todavía faltan puntos. Seguí dibujando.",
     tooMany: "Hay una forma más directa. Mirá una solución posible.",
     success: "¡Insight! Un cambio de perspectiva alcanza.",
-    solutionTitle: "Una forma más directa de unirlos",
+    solutionTitle: "",
   },
   elephant: {
     scrubHint:
@@ -90,6 +96,9 @@ export const es: Dictionary = {
     needFive: "La palabra tiene 5 letras.",
     success: "Lo resolviste iterando: probar, leer la señal, ajustar.",
     fail: "La palabra era {word}. Igual, el proceso iterativo cuenta.",
+    legendPresent: "Letra correcta, posición incorrecta",
+    legendCorrect: "Letra y posición correctas",
+    legendAbsent: "Letra incorrecta",
   },
   axes: [
     {
@@ -97,16 +106,16 @@ export const es: Dictionary = {
       name: "Cómo pensamos",
       accent: "#2B65E7",
       minutes: "~2 min",
-      gameTitle: "Insight",
+      gameTitle: "Desafío",
       story: [
-        "Pensemos en la siguiente situación.",
-        "Al explorar un enfoque diferente, descubrimos algo que, a primera vista, parecía no estar ahí. A veces, un cambio de perspectiva alcanza para reorganizar lo que vemos y encontrar una solución que antes no podíamos imaginar.",
-        "A estos momentos los llamamos insights: cuando una nueva lógica emerge y nos permite comprender un problema de otra manera.",
+        "Al explorar un enfoque diferente, descubrimos algo que a primera vista parecía no estar ahí. A veces, un <b>cambio de perspectiva</b> alcanza para reorganizar lo que vemos y encontrar una solución que antes no podíamos imaginar.",
+        "A estos momentos los llamamos <b>insights</b>: cuando una nueva lógica emerge y nos permite comprender un problema de otra manera. Pero, ¿cómo funciona esto en la vida cotidiana?",
+        "<b>Vamos a explorarlo en un desafío sencillo.</b>",
       ],
       gamePrompt:
-        "Intentá unir todos los puntos en la menor cantidad de líneas posibles.",
+        "Intentá unir todos los puntos usando la menor cantidad de líneas rectas posibles.",
       closing:
-        "Si cuestionamos los enfoques actuales podemos llegar a mejores resultados. Y para desarrollar ese pensamiento, necesitamos escuchar, recibir e integrar ideas distintas de las nuestras.",
+        "En el desafío anterior descubrimos que al descentrarnos de una de las perspectivas posibles pudimos encontrar una solución que no podíamos imaginar antes. De esta forma arribamos a nuestros primeros dos valores:",
       startChallenge: "Empezar desafío",
       values: [
         {
@@ -124,7 +133,7 @@ export const es: Dictionary = {
       name: "Cómo trabajamos",
       accent: "#448FF4",
       minutes: "~2 min",
-      gameTitle: "El elefante",
+      gameTitle: "",
       story: [
         "Retomemos una antigua parábola.",
         "Seis sabios ciegos se encuentran por primera vez con determinado animal. Como ninguno puede verlo, deciden descubrir qué criatura tienen delante utilizando únicamente el tacto.",

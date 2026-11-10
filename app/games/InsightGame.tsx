@@ -8,6 +8,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { Button } from "@/app/components/Button";
+import { RichText } from "@/app/components/RichText";
 import { useLocale } from "@/app/lib/i18n/LocaleProvider";
 import type { GameResult } from "@/app/lib/types";
 import { insightQuality, scoreFromQualityAndTime } from "@/app/lib/scoring";
@@ -43,6 +44,8 @@ const MAX_LINES = 4;
 type Pt = { x: number; y: number };
 
 type Props = {
+  title: string;
+  prompt: string;
   onFinish: (result: GameResult) => void;
 };
 
@@ -75,7 +78,7 @@ function hitsFromAnchors(anchors: Pt[]) {
   return ids;
 }
 
-export function InsightGame({ onFinish }: Props) {
+export function InsightGame({ title, prompt, onFinish }: Props) {
   const { t } = useLocale();
   const started = useRef(Date.now());
   const svgRef = useRef<SVGSVGElement>(null);
@@ -241,17 +244,12 @@ export function InsightGame({ onFinish }: Props) {
   const userOpacity = solved ? 0.28 : 1;
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2">
-      <p className="shrink-0 text-[12px] leading-snug text-[#02043E]/75 sm:text-[13px]">
-        {t.insight.hint}{" "}
-        <span className="text-[#02043E]/50">{t.insight.undoHint}</span>
-      </p>
-
-      <div className="min-h-0 flex-1 rounded-sm bg-[#eef2fb] p-2 touch-none sm:p-3">
+    <div className="grid h-full min-h-0 gap-6 md:grid-cols-2 md:items-stretch md:gap-8">
+      <div className="flex min-h-0 items-center justify-center rounded-sm bg-[#eef2fb] p-3 touch-none sm:p-5">
         <svg
           ref={svgRef}
           viewBox={`0 0 ${VIEW} ${VIEW}`}
-          className="mx-auto h-full max-h-[min(100%,38dvh)] w-auto max-w-full cursor-crosshair touch-none"
+          className="mx-auto h-auto max-h-[min(100%,52dvh)] w-full max-w-[min(100%,420px)] cursor-crosshair touch-none"
           style={{ touchAction: "none", aspectRatio: "1 / 1" }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -344,41 +342,58 @@ export function InsightGame({ onFinish }: Props) {
         </svg>
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center gap-2 text-xs text-[#02043E]/60">
-        <span>
-          {t.insight.dots}: {hit.size}/9
-        </span>
-      </div>
-
-      {!solved ? (
-        <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <Button type="button" onClick={check} className="w-full sm:w-auto">
-            {t.insight.check}
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={clearAll}
-            disabled={anchors.length === 0}
-            className="w-full sm:w-auto"
-          >
-            {t.insight.clear}
-          </Button>
+      <div className="flex min-h-0 flex-col justify-center gap-4">
+        <div className="space-y-3">
+          <h2 className="text-[clamp(1.25rem,1.5vw+0.7rem,1.75rem)] font-light tracking-tight">
+            {title}
+          </h2>
+          <RichText
+            as="p"
+            html={prompt}
+            className="text-[clamp(0.875rem,0.35vw+0.7rem,1rem)] font-bold leading-relaxed text-[#02043E]"
+          />
+          <p className="text-[clamp(0.8125rem,0.3vw+0.7rem,0.9375rem)] leading-relaxed text-[#02043E]/75">
+            {t.insight.hint}
+          </p>
+          <p className="text-sm text-[#02043E]/50">{t.insight.undoHint}</p>
         </div>
-      ) : null}
 
-      {feedback ? (
-        <p
-          className={`shrink-0 text-[13px] leading-snug ${solved ? "text-[#023D8F]" : "text-[#02043E]/70"}`}
-          role="status"
-        >
-          {feedback}
-        </p>
-      ) : null}
+        <div className="flex flex-wrap items-center gap-3 text-sm text-[#02043E]/60">
+          <span>
+            {t.insight.dots}: {hit.size}/9
+          </span>
+        </div>
 
-      {showSolution ? (
-        <p className="shrink-0 text-xs font-medium text-[#023D8F]">{t.insight.solutionTitle}</p>
-      ) : null}
+        {!solved ? (
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Button type="button" onClick={check} className="w-full sm:w-auto">
+              {t.insight.check}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={clearAll}
+              disabled={anchors.length === 0}
+              className="w-full sm:w-auto"
+            >
+              {t.insight.clear}
+            </Button>
+          </div>
+        ) : null}
+
+        {feedback ? (
+          <p
+            className={`text-[15px] leading-relaxed ${solved ? "text-[#023D8F]" : "text-[#02043E]/70"}`}
+            role="status"
+          >
+            {feedback}
+          </p>
+        ) : null}
+
+        {showSolution ? (
+          <p className="text-sm font-medium text-[#023D8F]">{t.insight.solutionTitle}</p>
+        ) : null}
+      </div>
     </div>
   );
 }

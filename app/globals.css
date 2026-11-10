@@ -222,6 +222,105 @@ button,
   animation: locale-swap 380ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Pantallas chatas (p. ej. 1366×768 con chrome → ~630–700px útiles). */
+@media (max-height: 820px) {
+  .site-header {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .site-main {
+    padding-top: 0.25rem;
+  }
+
+  .intro-screen {
+    gap: 1rem;
+  }
+
+  .intro-mark {
+    height: clamp(6.5rem, 18vh, 11rem);
+  }
+
+  .intro-h1 {
+    margin-top: 0.5rem;
+    font-size: clamp(1.25rem, 1.4vw + 0.7rem, 1.75rem);
+  }
+
+  .intro-p,
+  .intro-list,
+  .intro-dims,
+  .intro-q,
+  .intro-cta {
+    margin-top: 0.45rem;
+  }
+
+  .intro-list > * + *,
+  .intro-dims > * + * {
+    margin-top: 0.3rem;
+  }
+
+  .intro-cta {
+    margin-top: 0.75rem;
+  }
+
+  .axis-card {
+    margin-top: 0.75rem;
+    padding: 0.875rem 1rem;
+  }
+
+  .axis-card-mark {
+    height: 1.75rem;
+  }
+
+  .axis-story {
+    margin-top: 0.75rem;
+    gap: 0.55rem;
+  }
+
+  .axis-story-title {
+    font-size: clamp(1.15rem, 1.2vw + 0.7rem, 1.5rem);
+  }
+
+  .axis-story-body {
+    gap: 0.45rem;
+  }
+
+  .axis-story-body p {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  .axis-story-cta {
+    padding-top: 0.35rem;
+  }
+
+  .axis-reveal {
+    margin-top: 0.75rem;
+    gap: 0.65rem;
+  }
+}
+
+@media (max-height: 680px) {
+  .site-header {
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+  }
+
+  .axis-card {
+    margin-top: 0.5rem;
+    padding: 0.7rem 0.85rem;
+  }
+
+  .axis-story-title {
+    font-size: 1.15rem;
+  }
+
+  .axis-story-body p {
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .facet-base,
   .mark-spoiler {

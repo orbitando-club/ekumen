@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { RichText } from "@/app/components/RichText";
 import { useLocale } from "@/app/lib/i18n/LocaleProvider";
 import type { GameResult } from "@/app/lib/types";
 import { elephantQuality, scoreFailed, scoreFromQualityAndTime } from "@/app/lib/scoring";
@@ -42,7 +43,8 @@ const OUTLINE_PATHS = [
 ];
 
 const EYE = { cx: 37.507, cy: 82.5025, r: 7 };
-const HIT = 14;
+/** Radio de hit en coords SVG; un poco generoso para no “saltar” puntos. */
+const HIT = 20;
 /** Con un cuarto de los puntos ya se puede intentar adivinar. */
 const GUESS_AT = Math.ceil(RAW_POINTS.length * 0.25);
 /** Padding para que puntos/trazos no se corten en el borde */
@@ -50,6 +52,8 @@ const PAD = 12;
 const VB = { w: 249, h: 221 };
 
 type Props = {
+  title: string;
+  prompt: string;
   onFinish: (result: GameResult) => void;
 };
 
@@ -57,18 +61,20 @@ function dist(ax: number, ay: number, bx: number, by: number) {
   return Math.hypot(ax - bx, ay - by);
 }
 
-export function ElephantGame({ onFinish }: Props) {
+export function ElephantGame({ title, prompt, onFinish }: Props) {
   const { t } = useLocale();
   const started = useRef(Date.now());
   const svgRef = useRef<SVGSVGElement>(null);
   const drawing = useRef(false);
   const lastId = useRef<number | null>(null);
+  const lastPoint = useRef<{ x: number; y: number } | null>(null);
 
   const [visited, setVisited] = useState<Set<number>>(() => new Set());
   const [drawn, setDrawn] = useState<Set<string>>(() => new Set());
   const [activeId, setActiveId] = useState<number | null>(null);
   const [answer, setAnswer] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [forceReveal, setForceReveal] = useState(false);
 
   const neighbors = useMemo(() => {
     const map = new Map<number, number[]>();
@@ -87,6 +93,7 @@ export function ElephantGame({ onFinish }: Props) {
 
   const allEdgesDrawn = drawn.size >= EDGES.length;
   const complete = allEdgesDrawn || visited.size >= RAW_POINTS.length;
+  const showFull = complete || forceReveal;
   const canGuess = visited.size >= GUESS_AT || complete;
 
   function edgeKey(a: number, b: number) {
@@ -110,6 +117,25 @@ export function ElephantGame({ onFinish }: Props) {
       if (d <= HIT && (!best || d < best.d)) best = { id: i, d };
     }
     return best?.id ?? null;
+  }
+
+  /** Todos los puntos cercanos a un segmento (para no saltarlos al mover rápido). */
+  function hitsAlongSegment(ax: number, ay: number, bx: number, by: number) {
+    const span = Math.hypot(bx - ax, by - ay);
+    const steps = Math.max(1, Math.ceil(span / (HIT * 0.45)));
+    const found: number[] = [];
+    const seen = new Set<number>();
+    for (let i = 0; i <= steps; i += 1) {
+      const t = i / steps;
+      const x = ax + (bx - ax) * t;
+      const y = ay + (by - ay) * t;
+      const id = hitTest(x, y);
+      if (id !== null && !seen.has(id)) {
+        seen.add(id);
+        found.push(id);
+      }
+    }
+    return found;
   }
 
   function visit(id: number) {
@@ -142,14 +168,22 @@ export function ElephantGame({ onFinish }: Props) {
   function scrubAt(clientX: number, clientY: number) {
     const local = clientToSvg(clientX, clientY);
     if (!local) return;
-    const id = hitTest(local.x, local.y);
-    if (id !== null) visit(id);
+    const prev = lastPoint.current;
+    lastPoint.current = local;
+    const ids = prev
+      ? hitsAlongSegment(prev.x, prev.y, local.x, local.y)
+      : (() => {
+          const id = hitTest(local.x, local.y);
+          return id !== null ? [id] : [];
+        })();
+    for (const id of ids) visit(id);
   }
 
   function onPointerDown(e: ReactPointerEvent) {
     if (done || complete) return;
     drawing.current = true;
     (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+    lastPoint.current = null;
     scrubAt(e.clientX, e.clientY);
   }
 
@@ -163,6 +197,7 @@ export function ElephantGame({ onFinish }: Props) {
   function onPointerUp() {
     drawing.current = false;
     lastId.current = null;
+    lastPoint.current = null;
   }
 
   // Cuando todos los puntos están visitados, cerrar aristas restantes entre vecinos visitados
@@ -180,6 +215,12 @@ export function ElephantGame({ onFinish }: Props) {
     setAnswer(option);
     setDone(true);
     const correct = option === t.elephant.correct;
+    const pointsFound = visited.size;
+    if (correct) {
+      setForceReveal(true);
+      setVisited(new Set(RAW_POINTS.map((_, i) => i)));
+      setDrawn(new Set(EDGES.map(([a, b]) => edgeKey(a, b))));
+    }
     const elapsed = Date.now() - started.current;
     const breakdown = correct
       ? scoreFromQualityAndTime(elephantQuality(true), elapsed)
@@ -189,29 +230,25 @@ export function ElephantGame({ onFinish }: Props) {
         onFinish({
           score: breakdown.total,
           meta: {
-            points: visited.size,
+            points: pointsFound,
             correct,
             answer: option,
             quality: breakdown.quality,
             time: breakdown.time,
           },
         }),
-      800,
+      1200,
     );
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2">
-      <p className="shrink-0 text-[12px] leading-snug text-[#02043E]/75 sm:text-[13px]">
-        {t.elephant.scrubHint}
-      </p>
-
-      <div className="min-h-0 flex-1 overflow-hidden rounded-sm bg-[#eef2fb] p-2 touch-none sm:p-3">
+    <div className="grid h-full min-h-0 gap-6 md:grid-cols-2 md:items-stretch md:gap-8">
+      <div className="flex min-h-0 flex-col overflow-hidden rounded-sm bg-[#eef2fb] p-3 touch-none sm:p-5">
         <svg
           ref={svgRef}
           viewBox={`${-PAD} ${-PAD} ${VB.w + PAD * 2} ${VB.h + PAD * 2}`}
-          className="mx-auto h-full max-h-[min(100%,36dvh)] w-auto max-w-full touch-none"
-          style={{ touchAction: "none", cursor: "crosshair", aspectRatio: `${VB.w} / ${VB.h}` }}
+          className="mx-auto h-auto max-h-[min(100%,52dvh)] w-full max-w-[440px] flex-1 touch-none"
+          style={{ touchAction: "none", cursor: "grab", aspectRatio: `${VB.w} / ${VB.h}` }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -221,7 +258,7 @@ export function ElephantGame({ onFinish }: Props) {
           aria-label={t.elephant.scrubHint}
         >
           {/* Líneas reveladas (solo las aristas visitadas) */}
-          {!complete
+          {!showFull
             ? EDGES.map(([a, b]) => {
                 if (!drawn.has(edgeKey(a, b))) return null;
                 const [x1, y1] = RAW_POINTS[a];
@@ -241,8 +278,8 @@ export function ElephantGame({ onFinish }: Props) {
               })
             : null}
 
-          {/* Contorno SVG completo al terminar */}
-          {complete
+          {/* Contorno SVG completo al terminar o acertar */}
+          {showFull
             ? OUTLINE_PATHS.map((d) => (
                 <path
                   key={d.slice(0, 28)}
@@ -259,8 +296,8 @@ export function ElephantGame({ onFinish }: Props) {
 
           {/* Puntos redondos */}
           {RAW_POINTS.map(([x, y], id) => {
-            const on = visited.has(id);
-            const isActive = activeId === id;
+            const on = showFull || visited.has(id);
+            const isActive = !showFull && activeId === id;
             return (
               <circle
                 key={id}
@@ -275,8 +312,8 @@ export function ElephantGame({ onFinish }: Props) {
             );
           })}
 
-          {/* Ojito solo al completar */}
-          {complete ? (
+          {/* Ojito al completar o acertar */}
+          {showFull ? (
             <circle
               cx={EYE.cx}
               cy={EYE.cy}
@@ -286,38 +323,54 @@ export function ElephantGame({ onFinish }: Props) {
             />
           ) : null}
         </svg>
-        <p className="mt-1.5 text-center text-xs text-[#02043E]/55">
+        <p className="mt-3 shrink-0 text-center text-sm text-[#02043E]/55">
           {t.elephant.revealed}: {visited.size}/{RAW_POINTS.length}
         </p>
       </div>
 
-      {canGuess ? (
-        <div className="shrink-0 space-y-2">
-          <p className="text-sm font-medium">{t.elephant.question}</p>
-          <div className="grid grid-cols-2 gap-1.5">
-            {t.elephant.options.map((option) => {
-              const selected = answer === option;
-              const correct = option === t.elephant.correct;
-              let tone = "border-[#02043E]/15 bg-white hover:border-[#448FF4]";
-              if (done && correct) tone = "border-[#448FF4] bg-[#448FF4]/15";
-              if (done && selected && !correct) {
-                tone = "border-[#02043E]/10 bg-[#02043E]/05 opacity-50";
-              }
-              return (
-                <button
-                  key={option}
-                  type="button"
-                  disabled={done}
-                  onClick={() => choose(option)}
-                  className={`min-h-9 cursor-pointer rounded-sm border px-3 py-2 text-left text-[13px] transition-colors ${tone}`}
-                >
-                  {option}
-                </button>
-              );
-            })}
-          </div>
+      <div className="flex min-h-0 flex-col justify-center gap-4">
+        <div className="space-y-3">
+          <h2 className="text-[clamp(1.25rem,1.5vw+0.7rem,1.75rem)] font-light tracking-tight">
+            {title}
+          </h2>
+          <RichText
+            as="p"
+            html={prompt}
+            className="text-[clamp(0.875rem,0.35vw+0.7rem,1rem)] font-bold leading-relaxed text-[#02043E]"
+          />
+          <p className="text-[clamp(0.8125rem,0.3vw+0.7rem,0.9375rem)] leading-relaxed text-[#02043E]/75">
+            {t.elephant.scrubHint}
+          </p>
         </div>
-      ) : null}
+
+        {canGuess ? (
+          <div className="space-y-3">
+            <p className="font-medium">{t.elephant.question}</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {t.elephant.options.map((option) => {
+                const selected = answer === option;
+                const correct = option === t.elephant.correct;
+                let tone = "border-[#02043E]/15 bg-white hover:border-[#448FF4]";
+                if (done && correct) tone = "border-[#448FF4] bg-[#448FF4]/15";
+                if (done && selected && !correct) {
+                  tone = "border-[#02043E]/10 bg-[#02043E]/05 opacity-50";
+                }
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    disabled={done}
+                    onClick={() => choose(option)}
+                    className={`min-h-12 cursor-pointer rounded-sm border px-4 py-3 text-left text-[15px] transition-colors ${tone}`}
+                  >
+                    {option}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

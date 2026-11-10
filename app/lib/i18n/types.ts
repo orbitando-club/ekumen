@@ -34,6 +34,8 @@ export type Dictionary = {
     bridge: string;
     question: string;
     setup: string;
+    /** Las 4 dimensiones, en el mismo orden que los clusters/axisCards. */
+    dimensions: [string, string, string, string];
     ekuthon: string;
     cta: string;
   };
@@ -104,6 +106,9 @@ export type Dictionary = {
     needFive: string;
     success: string;
     fail: string;
+    legendPresent: string;
+    legendCorrect: string;
+    legendAbsent: string;
   };
   axes: AxisCopy[];
 };

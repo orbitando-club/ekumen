@@ -17,7 +17,13 @@ export const en: Dictionary = {
       "When we struggle to agree on these or other questions, we have principles that guide our decisions and how we relate to one another.",
     question: "But what are those principles?",
     setup:
-      "Our eight values are organized around four key dimensions: how we think, how we work together, how we make things happen, and how we deliver.",
+      "Our <b>eight values</b> are organized around <b>four key dimensions</b>:",
+    dimensions: [
+      "how we think",
+      "how we work together",
+      "how we make things happen",
+      "how we deliver",
+    ],
     ekuthon: "This sandbox is the warm-up for Ekuthon: Ekumen's journey on November 23.",
     cta: "Let's explore them",
   },
@@ -89,6 +95,9 @@ export const en: Dictionary = {
     needFive: "The word has 5 letters.",
     success: "You solved it by iterating: try, read the signal, adjust.",
     fail: "The word was {word}. The iterative process still counts.",
+    legendPresent: "Right letter, wrong position",
+    legendCorrect: "Right letter and position",
+    legendAbsent: "Wrong letter",
   },
   axes: [
     {

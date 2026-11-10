@@ -22,7 +22,7 @@ export function Button({
   className = "",
   ...props
 }: ButtonProps) {
-  const classes = `inline-flex cursor-pointer items-center justify-center rounded-sm px-5 py-2.5 text-[14px] font-medium transition-colors duration-200 ${styles[variant]} ${className}`;
+  const classes = `inline-flex cursor-pointer items-center justify-center rounded-sm px-6 py-3 text-[15px] font-medium transition-colors duration-200 ${styles[variant]} ${className}`;
 
   if (href) {
     return (

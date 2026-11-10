@@ -5,6 +5,7 @@ import { AxisScoreGrid, ValueCardList, type AxisScoreItem } from "@/app/componen
 import { Button } from "@/app/components/Button";
 import { Mark } from "@/app/components/Mark";
 import { ProgressBar } from "@/app/components/ProgressBar";
+import { RichText } from "@/app/components/RichText";
 import { ElephantGame } from "@/app/games/ElephantGame";
 import { InsightGame } from "@/app/games/InsightGame";
 import { LogicRiddleGame } from "@/app/games/LogicRiddleGame";
@@ -55,7 +56,6 @@ export function Experience() {
   const axis = axes[axisIndex];
   const done = completedCount(progress);
   const score = totalScore(scores);
-
   function axisItems(ids?: ClusterId[]): AxisScoreItem[] {
     return t.axisCards
       .filter((card) => !ids || ids.includes(card.id))
@@ -168,6 +168,16 @@ export function Experience() {
     el?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [phase]);
 
+  useEffect(() => {
+    const lock = phase !== "closing";
+    document.documentElement.style.overflow = lock ? "hidden" : "";
+    document.body.style.overflow = lock ? "hidden" : "";
+    return () => {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+    };
+  }, [phase]);
+
   function replay() {
     clearAssignedWords();
     reset();
@@ -181,11 +191,11 @@ export function Experience() {
     });
   }
 
-  const allowScroll = phase === "closing";
+  const isClosing = phase === "closing";
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden">
-      <header className="mx-auto flex w-full max-w-[1100px] shrink-0 items-center justify-between gap-2 px-4 py-2 sm:gap-3 sm:px-6">
+    <div className={isClosing ? "min-h-dvh" : "flex h-dvh flex-col overflow-hidden"}>
+      <header className="site-header mx-auto flex w-full max-w-[1100px] shrink-0 items-center justify-between gap-3 px-4 py-4 sm:gap-4 sm:px-6 sm:py-5">
         <button
           type="button"
           className="min-w-0 text-ink"
@@ -201,19 +211,19 @@ export function Experience() {
             progress={ready ? progress : undefined}
             wordmark
             animate={animateFacet}
-            className={`h-5 text-[18px] transition-opacity sm:h-6 sm:text-[20px] ${
+            className={`h-6 text-[20px] transition-opacity sm:h-7 sm:text-[24px] ${
               ready ? "opacity-100" : "opacity-0"
             }`}
           />
         </button>
-        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          <span className="hidden text-xs text-[#02043E]/50 sm:inline" suppressHydrationWarning>
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <span className="hidden text-sm text-[#02043E]/50 sm:inline" suppressHydrationWarning>
             {ready ? `${done}/4` : "\u00a0"}
           </span>
           <div
             role="group"
             aria-label="Language"
-            className="relative flex h-8 items-stretch border border-[#02043E]/15 bg-white p-0.5"
+            className="relative flex h-10 items-stretch border border-[#02043E]/15 bg-white p-0.5"
           >
             <span
               aria-hidden
@@ -225,7 +235,7 @@ export function Experience() {
             <button
               type="button"
               onClick={() => changeLocale("es")}
-              className={`relative z-10 min-w-8 px-2 text-[11px] font-semibold tracking-wide transition-colors ${
+              className={`relative z-10 min-w-10 px-2.5 text-xs font-semibold tracking-wide transition-colors ${
                 locale === "es" ? "text-white" : "text-[#02043E]/55 hover:text-[#02043E]"
               }`}
               aria-pressed={locale === "es"}
@@ -235,7 +245,7 @@ export function Experience() {
             <button
               type="button"
               onClick={() => changeLocale("en")}
-              className={`relative z-10 min-w-8 px-2 text-[11px] font-semibold tracking-wide transition-colors ${
+              className={`relative z-10 min-w-10 px-2.5 text-xs font-semibold tracking-wide transition-colors ${
                 locale === "en" ? "text-white" : "text-[#02043E]/55 hover:text-[#02043E]"
               }`}
               aria-pressed={locale === "en"}
@@ -246,7 +256,7 @@ export function Experience() {
           <button
             type="button"
             onClick={replay}
-            className="min-h-8 rounded-sm border border-[#02043E]/15 bg-white px-2.5 py-1.5 text-xs font-medium text-[#02043E] transition-colors hover:border-[#02043E]/35 sm:px-3"
+            className="min-h-10 rounded-sm border border-[#02043E]/15 bg-white px-3 py-2 text-sm font-medium text-[#02043E] transition-colors hover:border-[#02043E]/35 sm:px-4"
           >
             {t.ui.reset}
           </button>
@@ -254,48 +264,75 @@ export function Experience() {
       </header>
 
       <main
-        className={`mx-auto flex min-h-0 w-full max-w-[1100px] flex-1 flex-col px-4 pt-1 sm:px-6 transition-opacity duration-300 ${
-          allowScroll ? "overflow-y-auto pb-10" : "overflow-hidden pb-3"
+        className={`site-main mx-auto w-full max-w-[1100px] px-4 pt-2 sm:px-6 sm:pt-4 transition-opacity duration-300 ${
+          isClosing
+            ? "pb-16 sm:pb-20"
+            : "min-h-0 flex-1 overflow-hidden pb-3 sm:pb-4"
         } ${fade ? "opacity-100" : "opacity-0"} ${localeMotion ? "locale-swap" : ""}`}
       >
         {phase === "intro" ? (
-          <section className="grid min-h-0 flex-1 items-center gap-4 md:grid-cols-[auto_1fr] md:gap-8 lg:gap-10">
-            <div className="hidden justify-center md:flex md:justify-start">
+          <section className="intro-screen grid h-full items-center gap-6 md:grid-cols-[minmax(0,0.9fr)_minmax(0,2.1fr)] md:gap-8 lg:gap-12">
+            <div className="flex justify-center md:justify-start">
               <Mark
                 progress={ready ? progress : undefined}
-                className="mark-stagger h-28 lg:h-36"
+                className="intro-mark mark-stagger h-[clamp(7.5rem,22vh,16rem)]"
               />
             </div>
-            <div className="min-h-0">
-              <p className="text-[11px] font-medium tracking-[0.16em] uppercase text-[#023D8F]">
+            <div className="intro-copy min-w-0">
+              <p className="text-[11px] font-medium tracking-[0.18em] uppercase text-[#023D8F] sm:text-[12px]">
                 {t.intro.title}
               </p>
-              <h1 className="mt-1.5 text-[22px] font-light leading-[1.15] tracking-[-0.03em] sm:text-[26px] md:text-[32px]">
-                {t.intro.headline}
-              </h1>
-              <p className="mt-2 max-w-xl text-[13px] leading-snug text-[#02043E]/80 sm:text-[14px]">
-                {t.intro.lead}
-              </p>
-              <ul className="mt-2 max-w-xl space-y-1.5 text-[12px] leading-snug text-[#02043E]/70 sm:text-[13px]">
+              <RichText
+                as="h1"
+                html={t.intro.headline}
+                className="intro-h1 mt-3 text-[clamp(1.35rem,1.6vw+0.85rem,2.1rem)] font-light leading-[1.15] tracking-[-0.03em]"
+              />
+              <RichText
+                as="p"
+                html={t.intro.lead}
+                className="intro-p mt-3 max-w-2xl text-[clamp(0.8125rem,0.25vw+0.7rem,0.9375rem)] leading-snug text-[#02043E]/80"
+              />
+              <ul className="intro-list mt-3 max-w-2xl space-y-2 text-[clamp(0.75rem,0.2vw+0.68rem,0.875rem)] leading-snug text-[#02043E]/70">
                 {t.intro.dilemmas.map((d) => (
-                  <li key={d} className="border-l border-[#02043E]/15 pl-2.5">
-                    {d}
-                  </li>
+                  <RichText as="li" key={d} html={d} />
                 ))}
               </ul>
-              <p className="mt-2 max-w-xl text-[12px] leading-snug text-[#02043E]/75 sm:text-[13px]">
-                {t.intro.bridge}
-              </p>
-              <p className="mt-2 text-[14px] font-medium tracking-tight sm:text-[15px]">
-                {t.intro.question}
-              </p>
-              <p className="mt-1.5 max-w-xl text-[12px] leading-snug text-[#02043E]/75 sm:text-[13px]">
-                {t.intro.setup}
-              </p>
-              <p className="mt-2 max-w-xl border-l-2 border-[#023D8F] pl-3 text-[12px] leading-snug text-[#023D8F] sm:text-[13px]">
-                {t.intro.ekuthon}
-              </p>
-              <div className="mt-3">
+              <RichText
+                as="p"
+                html={t.intro.bridge}
+                className="intro-p mt-3 max-w-2xl text-[clamp(0.75rem,0.2vw+0.68rem,0.875rem)] leading-snug text-[#02043E]/75"
+              />
+              <RichText
+                as="p"
+                html={t.intro.question}
+                className="intro-q mt-2.5 text-[clamp(0.9375rem,0.3vw+0.75rem,1.0625rem)] font-medium tracking-tight"
+              />
+              <RichText
+                as="p"
+                html={t.intro.setup}
+                className="intro-p mt-2 max-w-2xl text-[clamp(0.75rem,0.2vw+0.68rem,0.875rem)] leading-snug text-[#02043E]/75"
+              />
+              <ul className="intro-dims mt-2 max-w-2xl space-y-1.5 text-[clamp(0.75rem,0.2vw+0.68rem,0.875rem)] leading-snug text-[#02043E]/75">
+                {t.intro.dimensions.map((label, index) => {
+                  const color = t.axisCards[index]?.color ?? "#023D8F";
+                  return (
+                    <li key={label} className="flex items-start gap-2.5">
+                      <span
+                        aria-hidden
+                        className="mt-[0.4em] h-2 w-2 shrink-0 rounded-full"
+                        style={{ background: color }}
+                      />
+                      <span>{label}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <RichText
+                as="p"
+                html={t.intro.ekuthon}
+                className="intro-p mt-3 max-w-2xl border-l-2 border-[#023D8F] pl-3 text-[clamp(0.75rem,0.2vw+0.68rem,0.875rem)] leading-snug text-[#023D8F]"
+              />
+              <div className="intro-cta mt-5">
                 <Button type="button" onClick={startJourney} className="w-full sm:w-auto">
                   {t.intro.cta}
                 </Button>
@@ -305,46 +342,48 @@ export function Experience() {
         ) : null}
 
         {phase === "axis" && axis ? (
-          <section className="mx-auto flex min-h-0 w-full max-w-[820px] flex-1 flex-col">
-            <div className="shrink-0">
-              <ProgressBar
-                current={axisIndex + 1}
-                total={4}
-                accent={axis.accent}
-                label={axis.name}
-              />
-            </div>
+          <section
+            className={`axis-screen mx-auto flex h-full flex-col ${
+              axisStep === "play" ? "max-w-[1100px]" : "max-w-[820px]"
+            }`}
+          >
+            <ProgressBar
+              current={axisIndex + 1}
+              total={4}
+              accent={axis.accent}
+              label={axis.name}
+            />
 
             <article
-              className="mt-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-sm bg-white p-3.5 shadow-[0_8px_30px_rgba(2,4,62,0.05)] sm:p-5"
-              style={{ boxShadow: `inset 3px 0 0 ${axis.accent}, 0 8px 30px rgba(2,4,62,0.05)` }}
+              className="axis-card mt-6 flex min-h-0 flex-1 flex-col overflow-hidden rounded-sm bg-white p-5 shadow-[0_8px_30px_rgba(2,4,62,0.05)] sm:p-7 md:p-10"
+              style={{ boxShadow: `inset 4px 0 0 ${axis.accent}, 0 8px 30px rgba(2,4,62,0.05)` }}
             >
-              <div className="flex shrink-0 flex-wrap items-center justify-between gap-2">
+              <div className="axis-card-meta flex shrink-0 flex-wrap items-baseline justify-between gap-3">
                 <p
-                  className="text-[11px] font-medium tracking-[0.14em] uppercase"
+                  className="text-[11px] font-medium tracking-[0.16em] uppercase sm:text-[12px]"
                   style={{ color: axis.accent }}
                 >
                   {axis.gameTitle} · {axis.minutes}
                 </p>
-                <Mark progress={progress} animate={animateFacet} className="h-7 sm:h-8" />
+                <Mark progress={progress} animate={animateFacet} className="axis-card-mark h-9 sm:h-10" />
               </div>
 
               {axisStep === "story" ? (
-                <div className="mt-3 flex min-h-0 flex-1 flex-col">
-                  <div className="min-h-0 flex-1 space-y-2.5 overflow-hidden">
-                    <h2 className="text-[22px] font-light tracking-[-0.03em] sm:text-[26px] md:text-[30px]">
-                      {axis.name}
-                    </h2>
+                <div className="axis-story mt-6 flex min-h-0 flex-1 flex-col gap-4">
+                  <h2 className="axis-story-title shrink-0 text-[clamp(1.5rem,1.8vw+1.5rem,2rem)] font-medium tracking-[-0.03em]">
+                    {axis.name}
+                  </h2>
+                  <div className="axis-story-body flex min-h-0 flex-1 flex-col gap-3">
                     {axis.story.map((paragraph) => (
-                      <p
+                      <RichText
+                        as="p"
                         key={paragraph}
-                        className="text-[13px] leading-snug text-[#02043E]/80 sm:text-[14px]"
-                      >
-                        {paragraph}
-                      </p>
+                        html={paragraph}
+                        className="text-[clamp(0.8125rem,0.3vw+0.7rem,0.9375rem)] leading-relaxed text-[#02043E]/80"
+                      />
                     ))}
                   </div>
-                  <div className="shrink-0 pt-3">
+                  <div className="axis-story-cta shrink-0 pt-1">
                     <Button type="button" onClick={goPlay} className="w-full sm:w-auto">
                       {axis.startChallenge}
                     </Button>
@@ -353,36 +392,53 @@ export function Experience() {
               ) : null}
 
               {axisStep === "play" ? (
-                <div className="mt-2 flex min-h-0 flex-1 flex-col overflow-hidden">
-                  <p className="mb-2 shrink-0 text-[13px] font-semibold leading-snug text-[#02043E] sm:text-[14px]">
-                    {axis.gamePrompt}
-                  </p>
-                  <div className="min-h-0 flex-1 overflow-hidden">
-                    {axis.id === "think" ? (
-                      <InsightGame key={`think-${t.locale}`} onFinish={onGameFinish} />
-                    ) : null}
-                    {axis.id === "together" ? (
-                      <ElephantGame key={`together-${t.locale}`} onFinish={onGameFinish} />
-                    ) : null}
-                    {axis.id === "happen" ? (
-                      <LogicRiddleGame key={`happen-${t.locale}`} onFinish={onGameFinish} />
-                    ) : null}
-                    {axis.id === "deliver" ? (
-                      <WordleGame key={`deliver-${t.locale}`} onFinish={onGameFinish} />
-                    ) : null}
-                  </div>
+                <div className="mt-4 flex min-h-0 flex-1 flex-col">
+                  {axis.id === "think" ? (
+                    <InsightGame
+                      key={`think-${t.locale}`}
+                      title={axis.gameTitle}
+                      prompt={axis.gamePrompt}
+                      onFinish={onGameFinish}
+                    />
+                  ) : null}
+                  {axis.id === "together" ? (
+                    <ElephantGame
+                      key={`together-${t.locale}`}
+                      title={axis.gameTitle}
+                      prompt={axis.gamePrompt}
+                      onFinish={onGameFinish}
+                    />
+                  ) : null}
+                  {axis.id === "happen" ? (
+                    <LogicRiddleGame
+                      key={`happen-${t.locale}`}
+                      title={axis.gameTitle}
+                      prompt={axis.gamePrompt}
+                      onFinish={onGameFinish}
+                    />
+                  ) : null}
+                  {axis.id === "deliver" ? (
+                    <WordleGame
+                      key={`deliver-${t.locale}`}
+                      title={axis.gameTitle}
+                      prompt={axis.gamePrompt}
+                      onFinish={onGameFinish}
+                    />
+                  ) : null}
                 </div>
               ) : null}
 
               {axisStep === "reveal" ? (
-                <div className="mt-3 flex min-h-0 flex-1 flex-col">
-                  <div className="min-h-0 flex-1 space-y-2.5 overflow-hidden">
-                    <h2 className="text-[20px] font-light tracking-[-0.03em] sm:text-[24px]">
+                <div className="axis-reveal mt-6 flex min-h-0 flex-1 flex-col gap-4">
+                  <div className="flex min-h-0 flex-1 flex-col gap-3">
+                    <h2 className="axis-story-title shrink-0 text-[clamp(1.375rem,1.8vw+0.8rem,1.875rem)] font-light tracking-[-0.03em]">
                       {t.ui.valuesReveal}
                     </h2>
-                    <p className="text-[13px] leading-snug text-[#02043E]/80 sm:text-[14px]">
-                      {axis.closing}
-                    </p>
+                    <RichText
+                      as="p"
+                      html={axis.closing}
+                      className="text-[clamp(0.8125rem,0.3vw+0.7rem,0.9375rem)] leading-relaxed text-[#02043E]/80"
+                    />
                     <ValueCardList
                       items={axis.values.map((value, index) => ({
                         id: `${axis.id}-${index}`,
@@ -392,11 +448,11 @@ export function Experience() {
                         startOpen: true,
                       }))}
                     />
-                    <p className="text-xs text-[#02043E]/55">
+                    <p className="text-sm text-[#02043E]/55">
                       +{scores[axis.id]} {t.ui.axisPoints}
                     </p>
                   </div>
-                  <div className="shrink-0 pt-3">
+                  <div className="axis-story-cta shrink-0">
                     <Button type="button" onClick={goNextAfterReveal} className="w-full sm:w-auto">
                       {axisIndex >= axes.length - 1 ? t.ui.seeClosing : t.ui.nextAxis}
                     </Button>
@@ -408,27 +464,29 @@ export function Experience() {
         ) : null}
 
         {phase === "closing" ? (
-          <section className="mx-auto w-full max-w-[820px] space-y-6">
-            <div className="rounded-sm bg-white p-5 text-center shadow-[0_8px_30px_rgba(2,4,62,0.05)] sm:p-7 md:p-10">
-              <Mark progress={progress} className="mx-auto h-20 sm:h-24 md:h-28" />
-              <h2 className="mt-4 text-[24px] font-light tracking-[-0.03em] sm:text-[28px] md:text-[36px]">
+          <section className="mx-auto max-w-[820px] space-y-8">
+            <div className="rounded-sm bg-white p-6 text-center shadow-[0_8px_30px_rgba(2,4,62,0.05)] sm:p-8 md:p-12">
+              <Mark progress={progress} className="mx-auto h-24 sm:h-28 md:h-36" />
+              <h2 className="mt-6 text-[clamp(1.5rem,2vw+0.8rem,2.25rem)] font-light tracking-[-0.03em]">
                 {t.closing.title}
               </h2>
-              <p className="mt-2 text-[14px] text-[#02043E]/75">{t.closing.subtitle}</p>
+              <p className="mt-3 text-[clamp(0.875rem,0.35vw+0.7rem,1rem)] text-[#02043E]/75">
+                {t.closing.subtitle}
+              </p>
 
-              <div id="closing-score" className="mt-7">
-                <p className="text-xs tracking-[0.14em] uppercase text-[#02043E]/45">
+              <div id="closing-score" className="mt-10">
+                <p className="text-sm tracking-[0.14em] uppercase text-[#02043E]/45">
                   {t.closing.scoreLabel}
                 </p>
-                <p className="mt-1.5 text-[56px] font-light leading-none tracking-[-0.04em] text-[#023D8F] sm:text-[64px] md:text-[80px]">
+                <p className="mt-2 text-[clamp(3.5rem,6vw+1rem,5.5rem)] font-light leading-none tracking-[-0.04em] text-[#023D8F]">
                   {score}
                 </p>
-                <p className="mt-1.5 text-xs text-[#02043E]/45">
+                <p className="mt-2 text-sm text-[#02043E]/45">
                   {t.ui.outOf} 1000
                 </p>
               </div>
 
-              <div className="mt-6">
+              <div className="mt-8">
                 <AxisScoreGrid
                   items={axisItems()}
                   pointsSuffix={t.ui.pts}
@@ -437,19 +495,19 @@ export function Experience() {
                 />
               </div>
 
-              <div className="mx-auto mt-8 max-w-lg border-t border-[#02043E]/08 pt-6">
-                <p className="text-[18px] font-medium tracking-tight text-[#023D8F] sm:text-[20px]">
+              <div className="mx-auto mt-10 max-w-lg border-t border-[#02043E]/08 pt-8">
+                <p className="text-[clamp(1.125rem,0.8vw+0.8rem,1.375rem)] font-medium tracking-tight text-[#023D8F]">
                   {t.closing.ekuthonTicket}
                 </p>
-                <p className="mt-2 text-[13px] leading-relaxed text-[#02043E]/70 sm:text-[14px]">
+                <p className="mt-2 text-[clamp(0.8125rem,0.3vw+0.7rem,0.9375rem)] leading-relaxed text-[#02043E]/70">
                   {t.closing.ekuthonDetail}
                 </p>
-                <p className="mt-3 text-[13px] font-medium leading-relaxed text-[#023D8F] sm:text-[14px]">
+                <p className="mt-4 text-[clamp(0.8125rem,0.3vw+0.7rem,0.9375rem)] font-medium leading-relaxed text-[#023D8F]">
                   {t.closing.ekuthonSpoiler}
                 </p>
               </div>
 
-              <div className="mx-auto mt-8 max-w-md text-left">
+              <div className="mx-auto mt-10 max-w-md text-left">
                 {!submitted ? (
                   <div className="space-y-3">
                     <label className="block text-sm font-medium">
@@ -459,7 +517,7 @@ export function Experience() {
                         onChange={(e) => setNameInput(e.target.value)}
                         maxLength={24}
                         placeholder={t.closing.namePlaceholder}
-                        className="mt-2 w-full rounded-sm border border-[#02043E]/15 px-4 py-2.5 text-sm outline-none focus:border-[#023D8F]"
+                        className="mt-2 w-full rounded-sm border border-[#02043E]/15 px-4 py-3 text-base outline-none focus:border-[#023D8F]"
                       />
                     </label>
                     <Button
@@ -478,7 +536,7 @@ export function Experience() {
                     ) : null}
                   </div>
                 ) : (
-                  <p className="text-center text-[14px] text-[#023D8F]">
+                  <p className="text-center text-[15px] text-[#023D8F]">
                     {t.ui.ready}
                     {displayName ? `, ${displayName}` : ""}.
                   </p>
@@ -486,19 +544,19 @@ export function Experience() {
               </div>
             </div>
 
-            <div className="rounded-sm bg-white p-5 shadow-[0_8px_30px_rgba(2,4,62,0.05)] sm:p-6 md:p-8">
-              <h3 className="text-lg font-medium tracking-tight">{t.closing.rankingTitle}</h3>
+            <div className="rounded-sm bg-white p-6 shadow-[0_8px_30px_rgba(2,4,62,0.05)] sm:p-7 md:p-9">
+              <h3 className="text-xl font-medium tracking-tight">{t.closing.rankingTitle}</h3>
               {!configured ? (
                 <p className="mt-2 text-sm text-[#02043E]/55">{t.closing.rankingLocal}</p>
               ) : null}
               {rows.length === 0 ? (
                 <p className="mt-4 text-sm text-[#02043E]/55">{t.ui.emptyRanking}</p>
               ) : (
-                <ol className="mt-4 space-y-1.5">
+                <ol className="mt-5 space-y-2">
                   {rows.map((row, index) => (
                     <li
                       key={row.id}
-                      className={`flex items-center justify-between rounded-sm px-3 py-2.5 text-[14px] ${
+                      className={`flex items-center justify-between rounded-sm px-4 py-3 text-[15px] ${
                         displayName &&
                         row.display_name.toLowerCase() === displayName.toLowerCase()
                           ? "bg-[#023D8F]/08"
@@ -516,7 +574,7 @@ export function Experience() {
               )}
             </div>
 
-            <div className="flex justify-center pb-2">
+            <div className="flex justify-center">
               <Button type="button" variant="secondary" onClick={replay} className="w-full sm:w-auto">
                 {t.closing.replay}
               </Button>
