@@ -14,7 +14,7 @@ export function SiteHeader() {
         <Mark
           progress={ready ? progress : undefined}
           wordmark
-          className={`h-8 text-[28px] transition-opacity ${ready ? "opacity-100" : "opacity-0"}`}
+          className={`h-8 text-[1.75rem] transition-opacity ${ready ? "opacity-100" : "opacity-0"}`}
         />
       </div>
       <span className="text-sm text-[#02043E]/50" suppressHydrationWarning>

@@ -40,12 +40,11 @@ const cellTone: Record<LetterState, string> = {
 };
 
 type Props = {
-  title: string;
   prompt: string;
   onFinish: (result: GameResult) => void;
 };
 
-export function WordleGame({ title, prompt, onFinish }: Props) {
+export function WordleGame({ prompt, onFinish }: Props) {
   const { t, locale } = useLocale();
   const [word] = useState(() => assignWordleWord(locale));
   const started = useRef(Date.now());
@@ -203,9 +202,6 @@ export function WordleGame({ title, prompt, onFinish }: Props) {
 
       <div className="flex min-h-0 w-full flex-col justify-center gap-4">
         <div className="space-y-2">
-          <h2 className="text-[clamp(1.25rem,1.5vw+0.7rem,1.75rem)] font-light tracking-tight">
-            {title}
-          </h2>
           <RichText
             as="p"
             html={prompt}
@@ -214,7 +210,7 @@ export function WordleGame({ title, prompt, onFinish }: Props) {
         </div>
 
         {message ? (
-          <p className="text-[15px] text-[#02043E]/75" role="status">
+          <p className="text-[0.9375rem] text-[#02043E]/75" role="status">
             {message}
           </p>
         ) : null}
@@ -226,7 +222,7 @@ export function WordleGame({ title, prompt, onFinish }: Props) {
                 <button
                   type="button"
                   onClick={() => onKey("ENTER")}
-                  className="h-12 flex-[1.4] rounded-md bg-[#02043E]/08 px-1 text-[11px] font-medium sm:text-xs"
+                  className="h-12 flex-[1.4] rounded-md bg-[#02043E]/08 px-1 text-[0.6875rem] font-medium sm:text-xs"
                 >
                   ENTER
                 </button>
@@ -258,7 +254,7 @@ export function WordleGame({ title, prompt, onFinish }: Props) {
                 <button
                   type="button"
                   onClick={() => onKey("BACKSPACE")}
-                  className="h-12 flex-[1.2] rounded-md bg-[#02043E]/08 px-1 text-[11px] font-medium sm:text-xs"
+                  className="h-12 flex-[1.2] rounded-md bg-[#02043E]/08 px-1 text-[0.6875rem] font-medium sm:text-xs"
                 >
                   ⌫
                 </button>
@@ -285,7 +281,7 @@ function ColorTip({
       <span
         tabIndex={0}
         aria-label={label}
-        className={`flex h-4 w-4 cursor-pointer items-center justify-center rounded-sm border text-[9px] font-semibold uppercase text-white outline-none focus-visible:ring-2 focus-visible:ring-[#683C95]/40 ${cellTone[tone]}`}
+        className={`flex h-4 w-4 cursor-pointer items-center justify-center rounded-sm border text-[0.5625rem] font-semibold uppercase text-white outline-none focus-visible:ring-2 focus-visible:ring-[#683C95]/40 ${cellTone[tone]}`}
       >
         {letter}
       </span>
@@ -344,7 +340,7 @@ function DelayedTip({
       {open && label ? (
         <span
           role="tooltip"
-          className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-20 w-max max-w-[220px] -translate-x-1/2 rounded-sm bg-[#02043E] px-2.5 py-1.5 text-left text-[12px] leading-snug text-white shadow-lg"
+          className="pointer-events-none absolute bottom-[calc(100%+0.5rem)] left-1/2 z-20 w-max max-w-[13.75rem] -translate-x-1/2 rounded-sm bg-[#02043E] px-2.5 py-1.5 text-left text-[0.75rem] leading-snug text-white shadow-lg"
         >
           {label}
           <span

@@ -52,7 +52,6 @@ const PAD = 12;
 const VB = { w: 249, h: 221 };
 
 type Props = {
-  title: string;
   prompt: string;
   onFinish: (result: GameResult) => void;
 };
@@ -61,7 +60,7 @@ function dist(ax: number, ay: number, bx: number, by: number) {
   return Math.hypot(ax - bx, ay - by);
 }
 
-export function ElephantGame({ title, prompt, onFinish }: Props) {
+export function ElephantGame({ prompt, onFinish }: Props) {
   const { t } = useLocale();
   const started = useRef(Date.now());
   const svgRef = useRef<SVGSVGElement>(null);
@@ -330,9 +329,6 @@ export function ElephantGame({ title, prompt, onFinish }: Props) {
 
       <div className="flex min-h-0 flex-col justify-center gap-4">
         <div className="space-y-3">
-          <h2 className="text-[clamp(1.25rem,1.5vw+0.7rem,1.75rem)] font-light tracking-tight">
-            {title}
-          </h2>
           <RichText
             as="p"
             html={prompt}
@@ -361,7 +357,7 @@ export function ElephantGame({ title, prompt, onFinish }: Props) {
                     type="button"
                     disabled={done}
                     onClick={() => choose(option)}
-                    className={`min-h-12 cursor-pointer rounded-sm border px-4 py-3 text-left text-[15px] transition-colors ${tone}`}
+                    className={`min-h-12 cursor-pointer rounded-sm border px-4 py-3 text-left text-[0.9375rem] transition-colors ${tone}`}
                   >
                     {option}
                   </button>

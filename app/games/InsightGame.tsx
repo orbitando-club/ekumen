@@ -14,11 +14,18 @@ import type { GameResult } from "@/app/lib/types";
 import { insightQuality, scoreFromQualityAndTime } from "@/app/lib/scoring";
 
 const COLS = 3;
-const GAP = 56;
-const ORIGIN = 48;
-const PAD = 48;
-const VIEW = ORIGIN * 2 + GAP * 2 + PAD * 2;
-const GRID0 = PAD + ORIGIN;
+/** Distancia entre puntos del 3×3. */
+const GAP = 100;
+/**
+ * Margen mínimo para que la solución clásica (1 GAP fuera del 3×3) no se corte.
+ * El cuadrado visual ocupa ~75% del viewBox; el SVG llena el contenedor.
+ */
+const EDGE = 10;
+const GRID0 = EDGE + GAP;
+const VIEW = EDGE * 2 + GAP * 4;
+/** Cuadrado con los puntos ≈ 75% del alto/ancho del SVG. */
+const BOX_SIZE = VIEW * 0.75;
+const BOX_PAD = (BOX_SIZE - GAP * 2) / 2;
 
 const DOTS = [0, 1, 2].flatMap((row) =>
   [0, 1, 2].map((col) => ({
@@ -37,14 +44,15 @@ const SOLUTION: { x: number; y: number }[] = [
   { x: GRID0 + 2 * GAP, y: GRID0 },
 ];
 
-const HIT_R = 18;
-const ANCHOR_HIT = 14;
+const HIT_R = 30;
+const ANCHOR_HIT = 22;
 const MAX_LINES = 4;
+const DOT_R = 13;
+const DOT_R_ACTIVE = 15;
 
 type Pt = { x: number; y: number };
 
 type Props = {
-  title: string;
   prompt: string;
   onFinish: (result: GameResult) => void;
 };
@@ -78,7 +86,7 @@ function hitsFromAnchors(anchors: Pt[]) {
   return ids;
 }
 
-export function InsightGame({ title, prompt, onFinish }: Props) {
+export function InsightGame({ prompt, onFinish }: Props) {
   const { t } = useLocale();
   const started = useRef(Date.now());
   const svgRef = useRef<SVGSVGElement>(null);
@@ -105,11 +113,13 @@ export function InsightGame({ title, prompt, onFinish }: Props) {
   function clientToSvg(clientX: number, clientY: number): Pt | null {
     const svg = svgRef.current;
     if (!svg) return null;
-    const rect = svg.getBoundingClientRect();
-    return {
-      x: ((clientX - rect.left) / rect.width) * VIEW,
-      y: ((clientY - rect.top) / rect.height) * VIEW,
-    };
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return null;
+    const pt = svg.createSVGPoint();
+    pt.x = clientX;
+    pt.y = clientY;
+    const local = pt.matrixTransform(ctm.inverse());
+    return { x: local.x, y: local.y };
   }
 
   const complete = useCallback(
@@ -245,12 +255,13 @@ export function InsightGame({ title, prompt, onFinish }: Props) {
 
   return (
     <div className="grid h-full min-h-0 gap-6 md:grid-cols-2 md:items-stretch md:gap-8">
-      <div className="flex min-h-0 items-center justify-center rounded-sm bg-[#eef2fb] p-3 touch-none sm:p-5">
+      <div className="h-full min-h-[18rem] overflow-hidden rounded-sm bg-[#eef2fb] p-2 touch-none sm:min-h-0 sm:p-3">
         <svg
           ref={svgRef}
           viewBox={`0 0 ${VIEW} ${VIEW}`}
-          className="mx-auto h-auto max-h-[min(100%,52dvh)] w-full max-w-[min(100%,420px)] cursor-crosshair touch-none"
-          style={{ touchAction: "none", aspectRatio: "1 / 1" }}
+          preserveAspectRatio="xMidYMid meet"
+          className="h-full w-full cursor-crosshair touch-none"
+          style={{ touchAction: "none" }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerLeave={() => setCursor(null)}
@@ -258,13 +269,13 @@ export function InsightGame({ title, prompt, onFinish }: Props) {
           aria-label={t.insight.hint}
         >
           <rect
-            x={GRID0 - 12}
-            y={GRID0 - 12}
-            width={GAP * 2 + 24}
-            height={GAP * 2 + 24}
+            x={GRID0 - BOX_PAD}
+            y={GRID0 - BOX_PAD}
+            width={BOX_SIZE}
+            height={BOX_SIZE}
             fill="none"
-            stroke="rgba(2,4,62,0.06)"
-            strokeWidth="1"
+            stroke="rgba(2,4,62,0.1)"
+            strokeWidth="1.5"
           />
 
           <g opacity={userOpacity} style={{ transition: "opacity 400ms ease" }}>
@@ -277,7 +288,7 @@ export function InsightGame({ title, prompt, onFinish }: Props) {
                     x2={anchors[i + 1].x}
                     y2={anchors[i + 1].y}
                     stroke="#2B65E7"
-                    strokeWidth="3"
+                    strokeWidth="4"
                     strokeLinecap="square"
                   />
                 ))
@@ -290,8 +301,8 @@ export function InsightGame({ title, prompt, onFinish }: Props) {
                 x2={preview.b.x}
                 y2={preview.b.y}
                 stroke="#2B65E7"
-                strokeWidth="2"
-                strokeDasharray="6 5"
+                strokeWidth="3"
+                strokeDasharray="8 6"
                 strokeOpacity="0.45"
                 strokeLinecap="square"
               />
@@ -302,10 +313,10 @@ export function InsightGame({ title, prompt, onFinish }: Props) {
                 key={`anchor-${i}`}
                 cx={a.x}
                 cy={a.y}
-                r={i === anchors.length - 1 ? 5 : 3.5}
+                r={i === anchors.length - 1 ? 7 : 5}
                 fill="#023D8F"
                 stroke="#fff"
-                strokeWidth="1.5"
+                strokeWidth="2"
                 className="pointer-events-none"
               />
             ))}
@@ -316,10 +327,10 @@ export function InsightGame({ title, prompt, onFinish }: Props) {
               d={solutionPath}
               fill="none"
               stroke="#023D8F"
-              strokeWidth="3.5"
+              strokeWidth="4.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeDasharray="10 6"
+              strokeDasharray="12 7"
               opacity="0.9"
             />
           ) : null}
@@ -331,10 +342,10 @@ export function InsightGame({ title, prompt, onFinish }: Props) {
                 key={dot.id}
                 cx={dot.x}
                 cy={dot.y}
-                r={active ? 9 : 7}
+                r={active ? DOT_R_ACTIVE : DOT_R}
                 fill={active ? "#2B65E7" : "#fff"}
                 stroke={active ? "#023D8F" : "rgba(2,4,62,0.35)"}
-                strokeWidth={active ? 2.5 : 1.75}
+                strokeWidth={active ? 3 : 2.25}
                 className="pointer-events-none"
               />
             );
@@ -344,9 +355,6 @@ export function InsightGame({ title, prompt, onFinish }: Props) {
 
       <div className="flex min-h-0 flex-col justify-center gap-4">
         <div className="space-y-3">
-          <h2 className="text-[clamp(1.25rem,1.5vw+0.7rem,1.75rem)] font-light tracking-tight">
-            {title}
-          </h2>
           <RichText
             as="p"
             html={prompt}
@@ -383,7 +391,7 @@ export function InsightGame({ title, prompt, onFinish }: Props) {
 
         {feedback ? (
           <p
-            className={`text-[15px] leading-relaxed ${solved ? "text-[#023D8F]" : "text-[#02043E]/70"}`}
+            className={`text-[0.9375rem] leading-relaxed ${solved ? "text-[#023D8F]" : "text-[#02043E]/70"}`}
             role="status"
           >
             {feedback}

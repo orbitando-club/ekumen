@@ -42,7 +42,7 @@ export function AxisScoreGrid({ items, pointsSuffix, expandedId, onToggle }: Gri
                 <ToggleMark open={open} />
               </div>
               <div className="mt-4 flex items-end justify-between gap-3">
-                <span className="text-[11px] font-semibold tracking-[0.08em] uppercase leading-snug sm:text-[12px]">
+                <span className="text-[0.6875rem] font-semibold tracking-[0.08em] uppercase leading-snug sm:text-[0.75rem]">
                   {card.label}
                 </span>
                 <span className="shrink-0 text-sm tabular-nums text-white/85">
@@ -54,7 +54,7 @@ export function AxisScoreGrid({ items, pointsSuffix, expandedId, onToggle }: Gri
                   {card.values.map((value) => (
                     <div key={value.name}>
                       <p className="font-semibold text-white">{value.name}</p>
-                      <p className="mt-1 text-[14px] leading-relaxed text-white/85">{value.line}</p>
+                      <p className="mt-1 text-[0.875rem] leading-relaxed text-white/85">{value.line}</p>
                     </div>
                   ))}
                 </div>
@@ -104,11 +104,11 @@ function ValueCard({ item }: { item: ValueCardItem }) {
         style={{ background: item.color }}
       >
         <div className="flex items-start justify-between gap-3">
-          <span className="text-[15px] font-semibold leading-snug">{item.name}</span>
+          <span className="text-[0.9375rem] font-semibold leading-snug">{item.name}</span>
           <ToggleMark open={open} />
         </div>
         <Disclosure open={open}>
-          <p className="mt-3 border-t border-white/25 pt-3 text-[14px] leading-relaxed text-white/90">
+          <p className="mt-3 border-t border-white/25 pt-3 text-[0.875rem] leading-relaxed text-white/90">
             {item.line}
           </p>
         </Disclosure>

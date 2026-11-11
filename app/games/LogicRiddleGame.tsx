@@ -40,12 +40,11 @@ const CLUES = {
 };
 
 type Props = {
-  title: string;
   prompt: string;
   onFinish: (result: GameResult) => void;
 };
 
-export function LogicRiddleGame({ title, prompt, onFinish }: Props) {
+export function LogicRiddleGame({ prompt, onFinish }: Props) {
   const { t, locale } = useLocale();
   const started = useRef(Date.now());
   const [assignment, setAssignment] = useState<Record<Person, Role | "">>({
@@ -143,7 +142,7 @@ export function LogicRiddleGame({ title, prompt, onFinish }: Props) {
         </div>
         {feedback ? (
           <p
-            className={`text-[15px] leading-relaxed ${solved ? "text-[#023D8F]" : "text-[#02043E]/70"}`}
+            className={`text-[0.9375rem] leading-relaxed ${solved ? "text-[#023D8F]" : "text-[#02043E]/70"}`}
             role="status"
           >
             {feedback}
@@ -153,9 +152,6 @@ export function LogicRiddleGame({ title, prompt, onFinish }: Props) {
 
       <div className="flex min-h-0 flex-col justify-center gap-4">
         <div className="space-y-3">
-          <h2 className="text-[clamp(1.25rem,1.5vw+0.7rem,1.75rem)] font-light tracking-tight">
-            {title}
-          </h2>
           <RichText
             as="p"
             html={prompt}
@@ -173,7 +169,7 @@ export function LogicRiddleGame({ title, prompt, onFinish }: Props) {
             ))}
           </ul>
           {showExtra ? (
-            <p className="mt-4 rounded-sm bg-white/80 px-4 py-3 text-[15px] text-[#775DFD]">
+            <p className="mt-4 rounded-sm bg-white/80 px-4 py-3 text-[0.9375rem] text-[#775DFD]">
               {t.riddle.extraHint}
             </p>
           ) : (

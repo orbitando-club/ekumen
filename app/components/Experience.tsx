@@ -211,7 +211,7 @@ export function Experience() {
             progress={ready ? progress : undefined}
             wordmark
             animate={animateFacet}
-            className={`h-6 text-[20px] transition-opacity sm:h-7 sm:text-[24px] ${
+            className={`h-6 text-[1.25rem] transition-opacity sm:h-7 sm:text-[1.5rem] ${
               ready ? "opacity-100" : "opacity-0"
             }`}
           />
@@ -279,20 +279,20 @@ export function Experience() {
               />
             </div>
             <div className="intro-copy min-w-0">
-              <p className="text-[11px] font-medium tracking-[0.18em] uppercase text-[#023D8F] sm:text-[12px]">
+              <p className="text-[0.6875rem] font-medium tracking-[0.18em] uppercase text-[#023D8F] sm:text-[0.75rem]">
                 {t.intro.title}
               </p>
               <RichText
                 as="h1"
                 html={t.intro.headline}
-                className="intro-h1 mt-3 text-[clamp(1.35rem,1.6vw+0.85rem,2.1rem)] font-light leading-[1.15] tracking-[-0.03em]"
+                className="intro-h1 mt-3.5 text-[clamp(1.35rem,1.6vw+0.85rem,2.1rem)] font-light leading-[1.2] tracking-[-0.03em]"
               />
               <RichText
                 as="p"
                 html={t.intro.lead}
-                className="intro-p mt-3 max-w-2xl text-[clamp(0.8125rem,0.25vw+0.7rem,0.9375rem)] leading-snug text-[#02043E]/80"
+                className="intro-p mt-4 max-w-2xl text-[clamp(0.8125rem,0.25vw+0.7rem,0.9375rem)] leading-[1.55] text-[#02043E]/80"
               />
-              <ul className="intro-list mt-3 max-w-2xl space-y-2 text-[clamp(0.75rem,0.2vw+0.68rem,0.875rem)] leading-snug text-[#02043E]/70">
+              <ul className="intro-list mt-4 max-w-2xl space-y-2.5 text-[clamp(0.75rem,0.2vw+0.68rem,0.875rem)] leading-[1.55] text-[#02043E]/70">
                 {t.intro.dilemmas.map((d) => (
                   <RichText as="li" key={d} html={d} />
                 ))}
@@ -300,26 +300,26 @@ export function Experience() {
               <RichText
                 as="p"
                 html={t.intro.bridge}
-                className="intro-p mt-3 max-w-2xl text-[clamp(0.75rem,0.2vw+0.68rem,0.875rem)] leading-snug text-[#02043E]/75"
+                className="intro-p mt-4 max-w-2xl text-[clamp(0.75rem,0.2vw+0.68rem,0.875rem)] leading-[1.55] text-[#02043E]/75"
               />
               <RichText
                 as="p"
                 html={t.intro.question}
-                className="intro-q mt-2.5 text-[clamp(0.9375rem,0.3vw+0.75rem,1.0625rem)] font-medium tracking-tight"
+                className="intro-q mt-8 text-[clamp(0.9375rem,0.3vw+0.75rem,1.0625rem)] font-medium leading-[1.35] tracking-tight"
               />
               <RichText
                 as="p"
                 html={t.intro.setup}
-                className="intro-p mt-2 max-w-2xl text-[clamp(0.75rem,0.2vw+0.68rem,0.875rem)] leading-snug text-[#02043E]/75"
+                className="intro-p mt-3 max-w-2xl text-[clamp(0.75rem,0.2vw+0.68rem,0.875rem)] leading-[1.55] text-[#02043E]/75"
               />
-              <ul className="intro-dims mt-2 max-w-2xl space-y-1.5 text-[clamp(0.75rem,0.2vw+0.68rem,0.875rem)] leading-snug text-[#02043E]/75">
+              <ul className="intro-dims mt-3 max-w-2xl space-y-2 text-[clamp(0.75rem,0.2vw+0.68rem,0.875rem)] leading-[1.5] text-[#02043E]/75">
                 {t.intro.dimensions.map((label, index) => {
                   const color = t.axisCards[index]?.color ?? "#023D8F";
                   return (
                     <li key={label} className="flex items-start gap-2.5">
                       <span
                         aria-hidden
-                        className="mt-[0.4em] h-2 w-2 shrink-0 rounded-full"
+                        className="mt-[0.45em] h-2 w-2 shrink-0 rounded-full"
                         style={{ background: color }}
                       />
                       <span>{label}</span>
@@ -330,9 +330,9 @@ export function Experience() {
               <RichText
                 as="p"
                 html={t.intro.ekuthon}
-                className="intro-p mt-3 max-w-2xl border-l-2 border-[#023D8F] pl-3 text-[clamp(0.75rem,0.2vw+0.68rem,0.875rem)] leading-snug text-[#023D8F]"
+                className="intro-p mt-4 max-w-2xl border-l-2 border-[#023D8F] pl-3 text-[clamp(0.75rem,0.2vw+0.68rem,0.875rem)] leading-[1.55] text-[#023D8F]"
               />
-              <div className="intro-cta mt-5">
+              <div className="intro-cta mt-6">
                 <Button type="button" onClick={startJourney} className="w-full sm:w-auto">
                   {t.intro.cta}
                 </Button>
@@ -358,28 +358,30 @@ export function Experience() {
               className="axis-card mt-6 flex min-h-0 flex-1 flex-col overflow-hidden rounded-sm bg-white p-5 shadow-[0_8px_30px_rgba(2,4,62,0.05)] sm:p-7 md:p-10"
               style={{ boxShadow: `inset 4px 0 0 ${axis.accent}, 0 8px 30px rgba(2,4,62,0.05)` }}
             >
-              <div className="axis-card-meta flex shrink-0 flex-wrap items-baseline justify-between gap-3">
+              <div className="axis-card-meta flex shrink-0 items-baseline justify-between gap-3">
+                <h2
+                  className="axis-story-title min-w-0 text-[clamp(1.35rem,1.6vw+0.85rem,1.875rem)] font-medium tracking-[-0.03em]"
+                >
+                  {axis.name}
+                </h2>
                 <p
-                  className="text-[11px] font-medium tracking-[0.16em] uppercase sm:text-[12px]"
+                  className="shrink-0 text-[0.75rem] font-medium tracking-[0.08em] uppercase sm:text-[0.8125rem]"
                   style={{ color: axis.accent }}
                 >
-                  {axis.gameTitle} · {axis.minutes}
+                  {axis.minutes}
                 </p>
-                <Mark progress={progress} animate={animateFacet} className="axis-card-mark h-9 sm:h-10" />
               </div>
 
               {axisStep === "story" ? (
                 <div className="axis-story mt-6 flex min-h-0 flex-1 flex-col gap-4">
-                  <h2 className="axis-story-title shrink-0 text-[clamp(1.5rem,1.8vw+1.5rem,2rem)] font-medium tracking-[-0.03em]">
-                    {axis.name}
-                  </h2>
                   <div className="axis-story-body flex min-h-0 flex-1 flex-col gap-3">
                     {axis.story.map((paragraph) => (
                       <RichText
                         as="p"
                         key={paragraph}
                         html={paragraph}
-                        className="text-[clamp(0.8125rem,0.3vw+0.7rem,0.9375rem)] leading-relaxed text-[#02043E]/80"
+                        accent={axis.accent}
+                        className="text-[clamp(0.875rem,0.3vw+0.75rem,1rem)] leading-relaxed text-[#02043E]/80"
                       />
                     ))}
                   </div>
@@ -396,7 +398,6 @@ export function Experience() {
                   {axis.id === "think" ? (
                     <InsightGame
                       key={`think-${t.locale}`}
-                      title={axis.gameTitle}
                       prompt={axis.gamePrompt}
                       onFinish={onGameFinish}
                     />
@@ -404,7 +405,6 @@ export function Experience() {
                   {axis.id === "together" ? (
                     <ElephantGame
                       key={`together-${t.locale}`}
-                      title={axis.gameTitle}
                       prompt={axis.gamePrompt}
                       onFinish={onGameFinish}
                     />
@@ -412,7 +412,6 @@ export function Experience() {
                   {axis.id === "happen" ? (
                     <LogicRiddleGame
                       key={`happen-${t.locale}`}
-                      title={axis.gameTitle}
                       prompt={axis.gamePrompt}
                       onFinish={onGameFinish}
                     />
@@ -420,7 +419,6 @@ export function Experience() {
                   {axis.id === "deliver" ? (
                     <WordleGame
                       key={`deliver-${t.locale}`}
-                      title={axis.gameTitle}
                       prompt={axis.gamePrompt}
                       onFinish={onGameFinish}
                     />
@@ -431,13 +429,11 @@ export function Experience() {
               {axisStep === "reveal" ? (
                 <div className="axis-reveal mt-6 flex min-h-0 flex-1 flex-col gap-4">
                   <div className="flex min-h-0 flex-1 flex-col gap-3">
-                    <h2 className="axis-story-title shrink-0 text-[clamp(1.375rem,1.8vw+0.8rem,1.875rem)] font-light tracking-[-0.03em]">
-                      {t.ui.valuesReveal}
-                    </h2>
                     <RichText
                       as="p"
                       html={axis.closing}
-                      className="text-[clamp(0.8125rem,0.3vw+0.7rem,0.9375rem)] leading-relaxed text-[#02043E]/80"
+                      accent={axis.accent}
+                      className="text-[clamp(0.875rem,0.3vw+0.75rem,1rem)] leading-relaxed text-[#02043E]/80"
                     />
                     <ValueCardList
                       items={axis.values.map((value, index) => ({
@@ -536,7 +532,7 @@ export function Experience() {
                     ) : null}
                   </div>
                 ) : (
-                  <p className="text-center text-[15px] text-[#023D8F]">
+                  <p className="text-center text-[0.9375rem] text-[#023D8F]">
                     {t.ui.ready}
                     {displayName ? `, ${displayName}` : ""}.
                   </p>
@@ -556,7 +552,7 @@ export function Experience() {
                   {rows.map((row, index) => (
                     <li
                       key={row.id}
-                      className={`flex items-center justify-between rounded-sm px-4 py-3 text-[15px] ${
+                      className={`flex items-center justify-between rounded-sm px-4 py-3 text-[0.9375rem] ${
                         displayName &&
                         row.display_name.toLowerCase() === displayName.toLowerCase()
                           ? "bg-[#023D8F]/08"

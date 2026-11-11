@@ -10,7 +10,8 @@ const nextConfig: NextConfig = {
   output: "export",
   trailingSlash: true,
   images: { unoptimized: true },
-  allowedDevOrigins: ["127.0.0.1", "localhost", "192.168.1.17"],
+  // Hosts LAN (p. ej. http://192.168.x.x:3000) para HMR / assets de dev.
+  allowedDevOrigins: ["127.0.0.1", "localhost", "192.168.*.*", "10.*.*.*"],
   experimental: {
     agentUpgrade: "security",
   },

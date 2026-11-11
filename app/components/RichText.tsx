@@ -1,4 +1,4 @@
-import type { ElementType, HTMLAttributes } from "react";
+import type { CSSProperties, ElementType, HTMLAttributes } from "react";
 
 const ALLOWED = new Set(["b", "i", "em", "strong", "br", "span", "u"]);
 
@@ -29,12 +29,25 @@ type Props = {
   html: string;
   as?: ElementType;
   className?: string;
-} & Omit<HTMLAttributes<HTMLElement>, "dangerouslySetInnerHTML" | "children" | "className">;
+  /** Si se pasa, <b>/<strong> toman este color (p. ej. acento del cluster). */
+  accent?: string;
+  style?: CSSProperties;
+} & Omit<
+  HTMLAttributes<HTMLElement>,
+  "dangerouslySetInnerHTML" | "children" | "className" | "style"
+>;
 
-export function RichText({ html, as: Tag = "span", className, ...rest }: Props) {
+export function RichText({ html, as: Tag = "span", className, accent, style, ...rest }: Props) {
+  const accentStyle = accent
+    ? ({ ...(style ?? {}), ["--rich-accent"]: accent } as CSSProperties)
+    : style;
+  const accentClass = accent ? "rich-accent" : "";
+  const merged = [accentClass, className].filter(Boolean).join(" ") || undefined;
+
   return (
     <Tag
-      className={className}
+      className={merged}
+      style={accentStyle}
       dangerouslySetInnerHTML={{ __html: sanitizeRichText(html) }}
       {...rest}
     />
