@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/app/components/Button";
+import { FinishFeedback } from "@/app/components/FinishFeedback";
 import { RichText } from "@/app/components/RichText";
 import { useLocale } from "@/app/lib/i18n/LocaleProvider";
 import type { GameResult } from "@/app/lib/types";
@@ -39,14 +40,18 @@ const CLUES = {
   ],
 };
 
+const FINISH_MS = 2500;
+
 type Props = {
   prompt: string;
+  accent: string;
   onFinish: (result: GameResult) => void;
 };
 
-export function LogicRiddleGame({ prompt, onFinish }: Props) {
+export function LogicRiddleGame({ prompt, accent, onFinish }: Props) {
   const { t, locale } = useLocale();
   const started = useRef(Date.now());
+  const pendingResult = useRef<GameResult | null>(null);
   const [assignment, setAssignment] = useState<Record<Person, Role | "">>({
     Ana: "",
     Bruno: "",
@@ -56,6 +61,7 @@ export function LogicRiddleGame({ prompt, onFinish }: Props) {
   const [hintsUsed, setHintsUsed] = useState(0);
   const [showExtra, setShowExtra] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [finishMessage, setFinishMessage] = useState<string | null>(null);
   const [solved, setSolved] = useState(false);
 
   useEffect(() => {
@@ -63,12 +69,17 @@ export function LogicRiddleGame({ prompt, onFinish }: Props) {
   }, []);
 
   function setRole(person: Person, role: Role | "") {
-    setAssignment((prev) => ({ ...prev, [person]: role }));
+    setAssignment((prev) => {
+      const next = { ...prev };
+      if (role) {
+        for (const other of PEOPLE) {
+          if (other !== person && next[other] === role) next[other] = "";
+        }
+      }
+      next[person] = role;
+      return next;
+    });
     setFeedback(null);
-  }
-
-  function usedRoles() {
-    return new Set(PEOPLE.map((p) => assignment[p]).filter(Boolean));
   }
 
   function check() {
@@ -87,18 +98,14 @@ export function LogicRiddleGame({ prompt, onFinish }: Props) {
       return;
     }
     setSolved(true);
-    setFeedback(t.riddle.success);
+    setFeedback(null);
+    setFinishMessage(t.riddle.success);
     const { total, quality, time } = scoreFromQualityAndTime(
       riddleQuality(hintsUsed),
       Date.now() - started.current,
     );
-    window.setTimeout(
-      () => onFinish({ score: total, meta: { hintsUsed, quality, time } }),
-      900,
-    );
+    pendingResult.current = { score: total, meta: { hintsUsed, quality, time } };
   }
-
-  const taken = usedRoles();
 
   return (
     <div className="grid h-full min-h-0 gap-6 md:grid-cols-2 md:items-stretch md:gap-8">
@@ -113,19 +120,16 @@ export function LogicRiddleGame({ prompt, onFinish }: Props) {
             <div className="flex flex-wrap gap-2">
               {ROLES.map((role, roleIndex) => {
                 const selected = assignment[person] === role;
-                const blocked = !selected && taken.has(role);
                 return (
                   <button
                     key={role}
                     type="button"
-                    disabled={solved || blocked}
+                    disabled={solved}
                     onClick={() => setRole(person, selected ? "" : role)}
                     className={`min-h-10 rounded-sm px-3 py-2 text-sm transition-colors ${
                       selected
                         ? "bg-[#775DFD] text-white"
-                        : blocked
-                          ? "bg-[#02043E]/05 text-[#02043E]/30"
-                          : "bg-[#02043E]/06 text-[#02043E] hover:bg-[#775DFD]/15"
+                        : "bg-[#02043E]/06 text-[#02043E] hover:bg-[#775DFD]/15"
                     }`}
                   >
                     {t.riddle.roles[roleIndex]}
@@ -136,15 +140,18 @@ export function LogicRiddleGame({ prompt, onFinish }: Props) {
           </div>
         ))}
         <div className="pt-1">
-          <Button type="button" onClick={check} disabled={solved} className="w-full sm:w-auto">
+          <Button
+            type="button"
+            accent={accent}
+            onClick={check}
+            disabled={solved}
+            className="w-full sm:w-auto"
+          >
             {t.riddle.check}
           </Button>
         </div>
         {feedback ? (
-          <p
-            className={`text-[0.9375rem] leading-relaxed ${solved ? "text-[#023D8F]" : "text-[#02043E]/70"}`}
-            role="status"
-          >
+          <p className="text-[0.9375rem] leading-relaxed text-[#02043E]/70" role="status">
             {feedback}
           </p>
         ) : null}
@@ -185,6 +192,17 @@ export function LogicRiddleGame({ prompt, onFinish }: Props) {
             </button>
           )}
         </div>
+
+        {finishMessage ? (
+          <FinishFeedback
+            message={finishMessage}
+            accent={accent}
+            durationMs={FINISH_MS}
+            onDone={() => {
+              if (pendingResult.current) onFinish(pendingResult.current);
+            }}
+          />
+        ) : null}
       </div>
     </div>
   );

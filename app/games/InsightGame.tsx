@@ -8,6 +8,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { Button } from "@/app/components/Button";
+import { FinishFeedback } from "@/app/components/FinishFeedback";
 import { RichText } from "@/app/components/RichText";
 import { useLocale } from "@/app/lib/i18n/LocaleProvider";
 import type { GameResult } from "@/app/lib/types";
@@ -54,6 +55,7 @@ type Pt = { x: number; y: number };
 
 type Props = {
   prompt: string;
+  accent: string;
   onFinish: (result: GameResult) => void;
 };
 
@@ -86,11 +88,12 @@ function hitsFromAnchors(anchors: Pt[]) {
   return ids;
 }
 
-export function InsightGame({ prompt, onFinish }: Props) {
+export function InsightGame({ prompt, accent, onFinish }: Props) {
   const { t } = useLocale();
   const started = useRef(Date.now());
   const svgRef = useRef<SVGSVGElement>(null);
   const finished = useRef(false);
+  const pendingResult = useRef<GameResult | null>(null);
 
   const [anchors, setAnchors] = useState<Pt[]>([]);
   const [cursor, setCursor] = useState<Pt | null>(null);
@@ -98,6 +101,8 @@ export function InsightGame({ prompt, onFinish }: Props) {
   const [solved, setSolved] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [finishMessage, setFinishMessage] = useState<string | null>(null);
+  const [finishMs, setFinishMs] = useState(2800);
   const [attempts, setAttempts] = useState(0);
 
   const lineCount = Math.max(0, anchors.length - 1);
@@ -130,21 +135,20 @@ export function InsightGame({ prompt, onFinish }: Props) {
       setCursor(null);
       const usedMoreThanFour = lines > MAX_LINES;
       setShowSolution(usedMoreThanFour);
-      setFeedback(usedMoreThanFour ? t.insight.tooMany : t.insight.success);
+      const message = usedMoreThanFour ? t.insight.tooMany : t.insight.success;
+      setFeedback(null);
+      setFinishMessage(message);
+      setFinishMs(usedMoreThanFour ? 4800 : 2800);
       const { total, quality, time } = scoreFromQualityAndTime(
         insightQuality(lines),
         Date.now() - started.current,
       );
-      window.setTimeout(
-        () =>
-          onFinish({
-            score: total,
-            meta: { lines, attempts: attemptCount, optimal: !usedMoreThanFour, quality, time },
-          }),
-        usedMoreThanFour ? 2400 : 1400,
-      );
+      pendingResult.current = {
+        score: total,
+        meta: { lines, attempts: attemptCount, optimal: !usedMoreThanFour, quality, time },
+      };
     },
-    [onFinish, t.insight.success, t.insight.tooMany],
+    [t.insight.success, t.insight.tooMany],
   );
 
   function placeAnchor(pt: Pt) {
@@ -374,7 +378,7 @@ export function InsightGame({ prompt, onFinish }: Props) {
 
         {!solved ? (
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Button type="button" onClick={check} className="w-full sm:w-auto">
+            <Button type="button" accent={accent} onClick={check} className="w-full sm:w-auto">
               {t.insight.check}
             </Button>
             <Button
@@ -390,12 +394,20 @@ export function InsightGame({ prompt, onFinish }: Props) {
         ) : null}
 
         {feedback ? (
-          <p
-            className={`text-[0.9375rem] leading-relaxed ${solved ? "text-[#023D8F]" : "text-[#02043E]/70"}`}
-            role="status"
-          >
+          <p className="text-[0.9375rem] leading-relaxed text-[#02043E]/70" role="status">
             {feedback}
           </p>
+        ) : null}
+
+        {finishMessage ? (
+          <FinishFeedback
+            message={finishMessage}
+            accent={accent}
+            durationMs={finishMs}
+            onDone={() => {
+              if (pendingResult.current) onFinish(pendingResult.current);
+            }}
+          />
         ) : null}
 
         {showSolution ? (

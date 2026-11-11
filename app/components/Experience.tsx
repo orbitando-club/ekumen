@@ -18,12 +18,15 @@ import {
   submitScore,
   type LeaderboardRow,
 } from "@/app/lib/leaderboard";
-import { completedCount, totalScore, useProgress } from "@/app/lib/progress";
+import {
+  completedCount,
+  totalScore,
+  useProgress,
+  type AxisStep,
+  type Phase,
+} from "@/app/lib/progress";
 import type { ClusterId, GameResult } from "@/app/lib/types";
 import { clearAssignedWords } from "@/app/lib/wordleWords";
-
-type Phase = "intro" | "axis" | "closing";
-type AxisStep = "story" | "play" | "reveal";
 
 export function Experience() {
   const { t, locale, setLocale } = useLocale();
@@ -32,16 +35,19 @@ export function Experience() {
     scores,
     displayName,
     submitted,
+    view,
     ready,
     markComplete,
     setDisplayName,
     markSubmitted,
+    setView,
     reset,
   } = useProgress();
 
   const [phase, setPhase] = useState<Phase>("intro");
   const [axisIndex, setAxisIndex] = useState(0);
   const [axisStep, setAxisStep] = useState<AxisStep>("story");
+  const [viewReady, setViewReady] = useState(false);
   const [fade, setFade] = useState(true);
   const [animateFacet, setAnimateFacet] = useState<ClusterId | null>(null);
   const [nameInput, setNameInput] = useState("");
@@ -61,7 +67,7 @@ export function Experience() {
       .filter((card) => !ids || ids.includes(card.id))
       .map((card) => ({
         id: card.id,
-        emoji: card.emoji,
+        icon: card.icon,
         label: card.label,
         color: card.color,
         points: scores[card.id],
@@ -70,11 +76,17 @@ export function Experience() {
   }
 
   useEffect(() => {
-    if (!ready) return;
-    if (done === 4 && phase === "intro") {
-      setPhase("closing");
-    }
-  }, [ready, done, phase]);
+    if (!ready || viewReady) return;
+    setPhase(view.phase);
+    setAxisIndex(view.axisIndex);
+    setAxisStep(view.axisStep);
+    setViewReady(true);
+  }, [ready, view, viewReady]);
+
+  useEffect(() => {
+    if (!viewReady) return;
+    setView({ phase, axisIndex, axisStep });
+  }, [viewReady, phase, axisIndex, axisStep, setView]);
 
   useEffect(() => {
     setNameInput(displayName);
@@ -268,7 +280,7 @@ export function Experience() {
           isClosing
             ? "pb-16 sm:pb-20"
             : "min-h-0 flex-1 overflow-hidden pb-3 sm:pb-4"
-        } ${fade ? "opacity-100" : "opacity-0"} ${localeMotion ? "locale-swap" : ""}`}
+        } ${fade && viewReady ? "opacity-100" : "opacity-0"} ${localeMotion ? "locale-swap" : ""}`}
       >
         {phase === "intro" ? (
           <section className="intro-screen grid h-full items-center gap-6 md:grid-cols-[minmax(0,0.9fr)_minmax(0,2.1fr)] md:gap-8 lg:gap-12">
@@ -386,7 +398,12 @@ export function Experience() {
                     ))}
                   </div>
                   <div className="axis-story-cta shrink-0 pt-1">
-                    <Button type="button" onClick={goPlay} className="w-full sm:w-auto">
+                    <Button
+                      type="button"
+                      accent={axis.accent}
+                      onClick={goPlay}
+                      className="w-full sm:w-auto"
+                    >
                       {axis.startChallenge}
                     </Button>
                   </div>
@@ -399,6 +416,7 @@ export function Experience() {
                     <InsightGame
                       key={`think-${t.locale}`}
                       prompt={axis.gamePrompt}
+                      accent={axis.accent}
                       onFinish={onGameFinish}
                     />
                   ) : null}
@@ -406,6 +424,7 @@ export function Experience() {
                     <ElephantGame
                       key={`together-${t.locale}`}
                       prompt={axis.gamePrompt}
+                      accent={axis.accent}
                       onFinish={onGameFinish}
                     />
                   ) : null}
@@ -413,6 +432,7 @@ export function Experience() {
                     <LogicRiddleGame
                       key={`happen-${t.locale}`}
                       prompt={axis.gamePrompt}
+                      accent={axis.accent}
                       onFinish={onGameFinish}
                     />
                   ) : null}
@@ -420,6 +440,7 @@ export function Experience() {
                     <WordleGame
                       key={`deliver-${t.locale}`}
                       prompt={axis.gamePrompt}
+                      accent={axis.accent}
                       onFinish={onGameFinish}
                     />
                   ) : null}
@@ -433,7 +454,7 @@ export function Experience() {
                       as="p"
                       html={axis.closing}
                       accent={axis.accent}
-                      className="text-[clamp(0.875rem,0.3vw+0.75rem,1rem)] leading-relaxed text-[#02043E]/80"
+                      className="text-[clamp(0.875rem,0.3vw+0.75rem,1rem)] leading-relaxed text-[#02043E]/80 mb-6"
                     />
                     <ValueCardList
                       items={axis.values.map((value, index) => ({
@@ -449,7 +470,12 @@ export function Experience() {
                     </p>
                   </div>
                   <div className="axis-story-cta shrink-0">
-                    <Button type="button" onClick={goNextAfterReveal} className="w-full sm:w-auto">
+                    <Button
+                      type="button"
+                      accent={axis.accent}
+                      onClick={goNextAfterReveal}
+                      className="w-full sm:w-auto"
+                    >
                       {axisIndex >= axes.length - 1 ? t.ui.seeClosing : t.ui.nextAxis}
                     </Button>
                   </div>
@@ -466,9 +492,11 @@ export function Experience() {
               <h2 className="mt-6 text-[clamp(1.5rem,2vw+0.8rem,2.25rem)] font-light tracking-[-0.03em]">
                 {t.closing.title}
               </h2>
-              <p className="mt-3 text-[clamp(0.875rem,0.35vw+0.7rem,1rem)] text-[#02043E]/75">
-                {t.closing.subtitle}
-              </p>
+              <RichText
+                as="p"
+                html={t.closing.subtitle}
+                className="mt-3 text-[clamp(0.875rem,0.35vw+0.7rem,1rem)] text-[#02043E]/75"
+              />
 
               <div id="closing-score" className="mt-10">
                 <p className="text-sm tracking-[0.14em] uppercase text-[#02043E]/45">

@@ -67,16 +67,17 @@ export const en: Dictionary = {
   elephant: {
     scrubHint:
       "Move your mouse or finger over the dots: they connect as you go. Once a quarter of them are revealed, you can try to guess. Finish them all and the eye appears.",
-    revealed: "Revealed",
     question: "What is the whole?",
     options: ["A wall", "An elephant", "Six different animals", "A snake"],
     correct: "An elephant",
+    success: "You saw the whole: an elephant! Integrating perspectives builds the picture.",
+    fail: "It was an elephant. Each part matters, but the whole matters more.",
   },
   axisCards: [
-    { id: "think", emoji: "🧠", label: "HOW WE THINK", color: "#2B65E7" },
-    { id: "together", emoji: "🤝", label: "HOW WE WORK TOGETHER", color: "#448FF4" },
-    { id: "happen", emoji: "🚀", label: "HOW WE MAKE THINGS HAPPEN", color: "#775DFD" },
-    { id: "deliver", emoji: "⭐", label: "HOW WE DELIVER", color: "#683C95" },
+    { id: "think", icon: "/icons/brain.png", label: "HOW WE THINK", color: "#2B65E7" },
+    { id: "together", icon: "/icons/handshake.png", label: "HOW WE WORK TOGETHER", color: "#448FF4" },
+    { id: "happen", icon: "/icons/rocket.png", label: "HOW WE MAKE THINGS HAPPEN", color: "#775DFD" },
+    { id: "deliver", icon: "/icons/star.png", label: "HOW WE DELIVER", color: "#683C95" },
   ],
   riddle: {
     clues: "Clues",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { FinishFeedback } from "@/app/components/FinishFeedback";
 import { RichText } from "@/app/components/RichText";
 import { useLocale } from "@/app/lib/i18n/LocaleProvider";
 import type { GameResult } from "@/app/lib/types";
@@ -50,9 +51,11 @@ const GUESS_AT = Math.ceil(RAW_POINTS.length * 0.25);
 /** Padding para que puntos/trazos no se corten en el borde */
 const PAD = 12;
 const VB = { w: 249, h: 221 };
+const FINISH_MS = 2400;
 
 type Props = {
   prompt: string;
+  accent: string;
   onFinish: (result: GameResult) => void;
 };
 
@@ -60,13 +63,14 @@ function dist(ax: number, ay: number, bx: number, by: number) {
   return Math.hypot(ax - bx, ay - by);
 }
 
-export function ElephantGame({ prompt, onFinish }: Props) {
+export function ElephantGame({ prompt, accent, onFinish }: Props) {
   const { t } = useLocale();
   const started = useRef(Date.now());
   const svgRef = useRef<SVGSVGElement>(null);
   const drawing = useRef(false);
   const lastId = useRef<number | null>(null);
   const lastPoint = useRef<{ x: number; y: number } | null>(null);
+  const pendingResult = useRef<GameResult | null>(null);
 
   const [visited, setVisited] = useState<Set<number>>(() => new Set());
   const [drawn, setDrawn] = useState<Set<string>>(() => new Set());
@@ -74,6 +78,7 @@ export function ElephantGame({ prompt, onFinish }: Props) {
   const [answer, setAnswer] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [forceReveal, setForceReveal] = useState(false);
+  const [finishMessage, setFinishMessage] = useState<string | null>(null);
 
   const neighbors = useMemo(() => {
     const map = new Map<number, number[]>();
@@ -224,20 +229,17 @@ export function ElephantGame({ prompt, onFinish }: Props) {
     const breakdown = correct
       ? scoreFromQualityAndTime(elephantQuality(true), elapsed)
       : scoreFailed();
-    window.setTimeout(
-      () =>
-        onFinish({
-          score: breakdown.total,
-          meta: {
-            points: pointsFound,
-            correct,
-            answer: option,
-            quality: breakdown.quality,
-            time: breakdown.time,
-          },
-        }),
-      1200,
-    );
+    setFinishMessage(correct ? t.elephant.success : t.elephant.fail);
+    pendingResult.current = {
+      score: breakdown.total,
+      meta: {
+        points: pointsFound,
+        correct,
+        answer: option,
+        quality: breakdown.quality,
+        time: breakdown.time,
+      },
+    };
   }
 
   return (
@@ -322,9 +324,6 @@ export function ElephantGame({ prompt, onFinish }: Props) {
             />
           ) : null}
         </svg>
-        <p className="mt-3 shrink-0 text-center text-sm text-[#02043E]/55">
-          {t.elephant.revealed}: {visited.size}/{RAW_POINTS.length}
-        </p>
       </div>
 
       <div className="flex min-h-0 flex-col justify-center gap-4">
@@ -365,6 +364,17 @@ export function ElephantGame({ prompt, onFinish }: Props) {
               })}
             </div>
           </div>
+        ) : null}
+
+        {finishMessage ? (
+          <FinishFeedback
+            message={finishMessage}
+            accent={accent}
+            durationMs={FINISH_MS}
+            onDone={() => {
+              if (pendingResult.current) onFinish(pendingResult.current);
+            }}
+          />
         ) : null}
       </div>
     </div>

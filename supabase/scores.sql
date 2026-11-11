@@ -1,6 +1,9 @@
 -- Ranking compartido. Corré este archivo entero en el SQL Editor de Supabase.
 -- Se puede volver a ejecutar: las policies se recrean y las personas de muestra
 -- solo se insertan si ese nombre todavía no está.
+--
+-- Si ves 401 / "permission denied for table scores", re-ejecutá este script:
+-- suele faltar el GRANT a anon/authenticated.
 
 create table if not exists public.scores (
   id uuid primary key default gen_random_uuid(),
@@ -15,6 +18,7 @@ create index if not exists scores_total_created_idx
 
 alter table public.scores enable row level security;
 
+grant usage on schema public to anon, authenticated;
 grant select, insert on table public.scores to anon, authenticated;
 
 drop policy if exists "Public read scores" on public.scores;

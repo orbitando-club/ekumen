@@ -11,7 +11,7 @@ export function ProgressBar({ current, total, accent = "#02043E", label }: Props
     <div className="space-y-2">
       <div className="flex items-baseline justify-between gap-3 text-sm">
         <span className="font-medium text-[#02043E]/70">
-          {label ?? `Eje ${current} de ${total}`}
+          {label ?? `Dimensión ${current} de ${total}`}
         </span>
         <span className="text-[#02043E]/45">
           {current}/{total}

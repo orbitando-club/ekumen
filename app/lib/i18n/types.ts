@@ -78,14 +78,16 @@ export type Dictionary = {
   };
   elephant: {
     scrubHint: string;
-    revealed: string;
     question: string;
     options: string[];
     correct: string;
+    success: string;
+    fail: string;
   };
   axisCards: {
     id: "think" | "together" | "happen" | "deliver";
-    emoji: string;
+    /** Ruta a ícono plain (p. ej. /icons/brain.png). */
+    icon: string;
     label: string;
     color: string;
   }[];

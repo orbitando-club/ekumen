@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { FinishFeedback } from "@/app/components/FinishFeedback";
 import { RichText } from "@/app/components/RichText";
 import { useLocale } from "@/app/lib/i18n/LocaleProvider";
 import type { GameResult } from "@/app/lib/types";
@@ -9,7 +10,7 @@ import { assignWordleWord } from "@/app/lib/wordleWords";
 
 const MAX_GUESSES = 6;
 const KEYS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
-const KEY_TIP_DELAY_MS = 1000;
+const FINISH_MS = 2000;
 
 type LetterState = "correct" | "present" | "absent" | "empty";
 
@@ -41,13 +42,15 @@ const cellTone: Record<LetterState, string> = {
 
 type Props = {
   prompt: string;
+  accent: string;
   onFinish: (result: GameResult) => void;
 };
 
-export function WordleGame({ prompt, onFinish }: Props) {
+export function WordleGame({ prompt, accent, onFinish }: Props) {
   const { t, locale } = useLocale();
   const [word] = useState(() => assignWordleWord(locale));
   const started = useRef(Date.now());
+  const pendingResult = useRef<GameResult | null>(null);
   const [rows, setRows] = useState<string[]>(Array(MAX_GUESSES).fill(""));
   const [states, setStates] = useState<LetterState[][]>(
     Array.from({ length: MAX_GUESSES }, () => Array(5).fill("empty")),
@@ -55,22 +58,13 @@ export function WordleGame({ prompt, onFinish }: Props) {
   const [rowIndex, setRowIndex] = useState(0);
   const [current, setCurrent] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  const [finishMessage, setFinishMessage] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [keyMap, setKeyMap] = useState<Record<string, LetterState>>({});
 
   useEffect(() => {
     started.current = Date.now();
   }, []);
-
-  const legendFor = useCallback(
-    (st: LetterState) => {
-      if (st === "correct") return t.wordle.legendCorrect;
-      if (st === "present") return t.wordle.legendPresent;
-      if (st === "absent") return t.wordle.legendAbsent;
-      return null;
-    },
-    [t.wordle.legendAbsent, t.wordle.legendCorrect, t.wordle.legendPresent],
-  );
 
   const finish = useCallback(
     (won: boolean, guessesUsed: number) => {
@@ -79,23 +73,20 @@ export function WordleGame({ prompt, onFinish }: Props) {
       const breakdown = won
         ? scoreFromQualityAndTime(wordleQuality(true, guessesUsed), elapsed)
         : scoreFailed();
-      setMessage(won ? t.wordle.success : t.wordle.fail.replace("{word}", word));
-      window.setTimeout(
-        () =>
-          onFinish({
-            score: breakdown.total,
-            meta: {
-              won,
-              guessesUsed,
-              word,
-              quality: breakdown.quality,
-              time: breakdown.time,
-            },
-          }),
-        1000,
-      );
+      setMessage(null);
+      setFinishMessage(won ? t.wordle.success : t.wordle.fail.replace("{word}", word));
+      pendingResult.current = {
+        score: breakdown.total,
+        meta: {
+          won,
+          guessesUsed,
+          word,
+          quality: breakdown.quality,
+          time: breakdown.time,
+        },
+      };
     },
-    [onFinish, t.wordle.fail, t.wordle.success, word],
+    [t.wordle.fail, t.wordle.success, word],
   );
 
   const submit = useCallback(() => {
@@ -168,11 +159,6 @@ export function WordleGame({ prompt, onFinish }: Props) {
   return (
     <div className="grid h-full min-h-0 gap-5 md:grid-cols-2 md:items-stretch md:gap-8">
       <div className="flex min-h-0 flex-col items-center justify-center gap-3">
-        <div className="flex items-center gap-1.5">
-          <ColorTip letter="A" tone="present" label={t.wordle.legendPresent} />
-          <ColorTip letter="A" tone="correct" label={t.wordle.legendCorrect} />
-        </div>
-
         <div className="flex flex-col items-center gap-1.5">
           {Array.from({ length: MAX_GUESSES }, (_, r) => {
             const letters =
@@ -201,18 +187,33 @@ export function WordleGame({ prompt, onFinish }: Props) {
       </div>
 
       <div className="flex min-h-0 w-full flex-col justify-center gap-4">
-        <div className="space-y-2">
+        <div className="space-y-3">
           <RichText
             as="p"
             html={prompt}
             className="text-[clamp(0.875rem,0.35vw+0.7rem,1rem)] font-bold leading-relaxed text-[#02043E]"
           />
+          <ul className="space-y-2">
+            <LegendRow letter="A" tone="present" label={t.wordle.legendPresent} />
+            <LegendRow letter="A" tone="correct" label={t.wordle.legendCorrect} />
+          </ul>
         </div>
 
         {message ? (
           <p className="text-[0.9375rem] text-[#02043E]/75" role="status">
             {message}
           </p>
+        ) : null}
+
+        {finishMessage ? (
+          <FinishFeedback
+            message={finishMessage}
+            accent={accent}
+            durationMs={FINISH_MS}
+            onDone={() => {
+              if (pendingResult.current) onFinish(pendingResult.current);
+            }}
+          />
         ) : null}
 
         <div className="w-full space-y-1.5">
@@ -237,17 +238,15 @@ export function WordleGame({ prompt, onFinish }: Props) {
                       : st === "absent"
                         ? "bg-[#02043E]/2 text-white"
                         : "bg-[#02043E]/08";
-                const tip = legendFor(st);
                 return (
-                  <DelayedTip key={key} label={tip} fill delayMs={KEY_TIP_DELAY_MS}>
-                    <button
-                      type="button"
-                      onClick={() => onKey(key)}
-                      className={`h-12 w-full rounded-md text-sm font-medium sm:text-base ${tone}`}
-                    >
-                      {key}
-                    </button>
-                  </DelayedTip>
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => onKey(key)}
+                    className={`h-12 min-w-0 flex-1 rounded-md text-sm font-medium sm:text-base ${tone}`}
+                  >
+                    {key}
+                  </button>
                 );
               })}
               {row === "ZXCVBNM" ? (
@@ -267,88 +266,24 @@ export function WordleGame({ prompt, onFinish }: Props) {
   );
 }
 
-function ColorTip({
+function LegendRow({
   letter,
   tone,
   label,
 }: {
   letter: string;
-  tone: "present" | "correct";
+  tone: "present" | "correct" | "absent";
   label: string;
 }) {
   return (
-    <DelayedTip label={label} delayMs={0}>
+    <li className="flex items-center gap-2.5 text-[0.8125rem] leading-snug text-[#02043E]/75">
       <span
-        tabIndex={0}
-        aria-label={label}
-        className={`flex h-4 w-4 cursor-pointer items-center justify-center rounded-sm border text-[0.5625rem] font-semibold uppercase text-white outline-none focus-visible:ring-2 focus-visible:ring-[#683C95]/40 ${cellTone[tone]}`}
+        aria-hidden
+        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border text-[0.625rem] font-semibold uppercase text-white ${cellTone[tone]}`}
       >
         {letter}
       </span>
-    </DelayedTip>
-  );
-}
-
-function DelayedTip({
-  label,
-  children,
-  fill = false,
-  delayMs = 0,
-}: {
-  label: string | null;
-  children: React.ReactNode;
-  fill?: boolean;
-  delayMs?: number;
-}) {
-  const [open, setOpen] = useState(false);
-  const timer = useRef<number | null>(null);
-
-  function clearTimer() {
-    if (timer.current !== null) {
-      window.clearTimeout(timer.current);
-      timer.current = null;
-    }
-  }
-
-  function clear() {
-    clearTimer();
-    setOpen(false);
-  }
-
-  function start() {
-    if (!label) return;
-    clearTimer();
-    setOpen(false);
-    if (delayMs <= 0) {
-      setOpen(true);
-      return;
-    }
-    timer.current = window.setTimeout(() => setOpen(true), delayMs);
-  }
-
-  useEffect(() => () => clearTimer(), []);
-
-  return (
-    <span
-      className={`relative inline-flex ${fill ? "min-w-0 flex-1" : ""}`}
-      onMouseEnter={start}
-      onMouseLeave={clear}
-      onFocus={start}
-      onBlur={clear}
-    >
-      {children}
-      {open && label ? (
-        <span
-          role="tooltip"
-          className="pointer-events-none absolute bottom-[calc(100%+0.5rem)] left-1/2 z-20 w-max max-w-[13.75rem] -translate-x-1/2 rounded-sm bg-[#02043E] px-2.5 py-1.5 text-left text-[0.75rem] leading-snug text-white shadow-lg"
-        >
-          {label}
-          <span
-            aria-hidden
-            className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-[#02043E]"
-          />
-        </span>
-      ) : null}
-    </span>
+      <span>{label}</span>
+    </li>
   );
 }

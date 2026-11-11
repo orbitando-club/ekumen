@@ -1,9 +1,11 @@
 import Link from "next/link";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary" | "ghost";
   href?: string;
+  /** Color de fondo para primary (p. ej. acento del cluster). */
+  accent?: string;
   children: ReactNode;
 };
 
@@ -18,22 +20,38 @@ const styles = {
 export function Button({
   variant = "primary",
   href,
+  accent,
   children,
   className = "",
+  style,
   ...props
 }: ButtonProps) {
-  const classes = `inline-flex cursor-pointer items-center justify-center rounded-sm px-6 py-3 text-[0.9375rem] font-medium transition-colors duration-200 ${styles[variant]} ${className}`;
+  const accentStyle: CSSProperties | undefined =
+    variant === "primary" && accent
+      ? {
+          ...(style ?? {}),
+          backgroundColor: accent,
+          borderColor: accent,
+        }
+      : style;
+
+  const accentHover =
+    variant === "primary" && accent ? "hover:brightness-110 hover:opacity-95" : "";
+
+  const classes = `inline-flex cursor-pointer items-center justify-center rounded-sm px-6 py-3 text-[0.9375rem] font-medium transition-[colors,filter,opacity] duration-200 ${
+    accent && variant === "primary" ? "text-white border border-transparent" : styles[variant]
+  } ${accentHover} ${className}`;
 
   if (href) {
     return (
-      <Link href={href} className={classes}>
+      <Link href={href} className={classes} style={accentStyle}>
         {children}
       </Link>
     );
   }
 
   return (
-    <button className={classes} {...props}>
+    <button className={classes} style={accentStyle} {...props}>
       {children}
     </button>
   );

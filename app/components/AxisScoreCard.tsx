@@ -5,7 +5,7 @@ import type { ClusterId } from "@/app/lib/types";
 
 export type AxisScoreItem = {
   id: ClusterId;
-  emoji: string;
+  icon: string;
   label: string;
   color: string;
   points: number;
@@ -36,9 +36,13 @@ export function AxisScoreGrid({ items, pointsSuffix, expandedId, onToggle }: Gri
               style={{ background: card.color }}
             >
               <div className="flex items-start justify-between gap-2">
-                <span className="text-2xl leading-none" aria-hidden>
-                  {card.emoji}
-                </span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${card.icon}`}
+                  alt=""
+                  aria-hidden
+                  className="h-7 w-7 object-contain"
+                />
                 <ToggleMark open={open} />
               </div>
               <div className="mt-4 flex items-end justify-between gap-3">
