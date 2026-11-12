@@ -11,24 +11,6 @@ export type LeaderboardRow = {
 
 const LOCAL_KEY = "ekumen-leaderboard-local";
 
-/** Personas de muestra para que el ranking no arranque vacío. */
-export const MOCK_SCORES: LeaderboardRow[] = [
-  {
-    id: "mock-sofi",
-    display_name: "Sofi",
-    total: 846,
-    breakdown: { think: 220, together: 210, happen: 206, deliver: 210 },
-    created_at: "2026-11-01T12:00:00.000Z",
-  },
-  {
-    id: "mock-martin",
-    display_name: "Martín",
-    total: 781,
-    breakdown: { think: 198, together: 205, happen: 190, deliver: 188 },
-    created_at: "2026-11-02T15:30:00.000Z",
-  },
-];
-
 function supabaseKey() {
   return (
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
@@ -85,14 +67,6 @@ function saveLocalScore(input: {
   return row;
 }
 
-function withMocks(rows: LeaderboardRow[], limit: number) {
-  const names = new Set(rows.map((row) => row.display_name.toLowerCase()));
-  const extras = MOCK_SCORES.filter((row) => !names.has(row.display_name.toLowerCase()));
-  return [...rows, ...extras]
-    .sort((a, b) => b.total - a.total || a.created_at.localeCompare(b.created_at))
-    .slice(0, limit);
-}
-
 async function fetchRemoteScores(limit: number): Promise<LeaderboardRow[] | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = supabaseKey();
@@ -145,8 +119,8 @@ async function submitRemote(input: {
 
 export async function fetchTopScores(limit = 10): Promise<LeaderboardRow[]> {
   const remote = await fetchRemoteScores(limit);
-  if (remote) return withMocks(remote, limit);
-  return withMocks(fetchLocalScores(limit), limit);
+  if (remote) return remote.slice(0, limit);
+  return fetchLocalScores(limit);
 }
 
 export async function submitScore(input: {

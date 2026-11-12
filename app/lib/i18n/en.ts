@@ -8,10 +8,10 @@ export const en: Dictionary = {
   intro: {
     title: "Ekumen Sandbox",
     headline: "A north star for deciding together",
-    lead: "Values work like a north star: a reference we can turn to when we need to resolve everyday dilemmas at work.",
+    lead: "<b>Values</b> work like a north star: a reference we can turn to when we need to resolve everyday dilemmas at work.",
     dilemmas: [
-      "Do we prioritize solutions we already know, or make room to explore new alternatives—even when time is limited?",
-      "Do we prefer one person to own planning and estimates, or share that responsibility across the team?",
+      "<i>Do we prioritize solutions we already know, or make room to explore new alternatives—even when time is limited?</i>",
+      "<i>Do we prefer one person to own planning and estimates, or share that responsibility across the team?</i>",
     ],
     bridge:
       "When we struggle to agree on these or other questions, we have principles that guide our decisions and how we relate to one another.",
@@ -40,7 +40,7 @@ export const en: Dictionary = {
   },
   closing: {
     title: "Powering your ingenuity",
-    subtitle: "These are the eight values that guide us.",
+    subtitle: "These are the <b>eight values</b> that guide us.",
     scoreLabel: "Your score",
     ekuthonTicket: "You've got your ticket to Ekuthon",
     ekuthonDetail: "Ekumen's journey is on November 23. See you there.",
@@ -108,14 +108,14 @@ export const en: Dictionary = {
       minutes: "~2 min",
       gameTitle: "Insight",
       story: [
-        "Consider the following situation.",
-        "By exploring a different approach, we discover something that, at first glance, did not seem to be there. Sometimes a shift in perspective is enough to reorganize what we see.",
-        "We call these moments insights: when a new logic emerges and lets us understand a problem differently.",
+        "By exploring a different approach, we discover something that at first glance did not seem to be there. Sometimes a <b>shift in perspective</b> is enough to reorganize what we see and find a solution we could not imagine before.",
+        "We call these moments <b>insights</b>: when a new logic emerges and lets us understand a problem differently. But how does this work in everyday life?",
+        "<b>Let's explore it in a simple challenge.</b>",
       ],
       gamePrompt:
         "Draw lines to connect the nine dots. A change of perspective often reveals more than first meets the eye.",
       closing:
-        "If we challenge current approaches we can reach better results. Developing that thinking also means listening to and integrating ideas different from our own.",
+        "In the previous challenge we discovered that by <b>decentering</b> from one of the problem's factors, we found a <b>different approach</b> that let us reach a solution we could not imagine before. That's how we arrive at our first two values:",
       startChallenge: "Start challenge",
       values: [
         {
@@ -135,14 +135,14 @@ export const en: Dictionary = {
       minutes: "~2 min",
       gameTitle: "The elephant",
       story: [
-        "Let's revisit an old parable.",
-        "Six blind sages meet an elephant for the first time. Since none can see it, they try to discover what animal stands before them using only touch.",
-        "Meanwhile, you can try to discover it too.",
+        "Our work is inherently <b>collective</b> in nature: many visions <b>coexist</b> when we develop solutions together.",
+        "Let's revisit an old parable: six blind sages meet an animal for the first time. Since none can see it, they try to discover what creature stands before them using only touch.",
+        "Meanwhile, you can try to discover it too on the next screen.",
       ],
       gamePrompt:
         "Pass over the outline dots. At 25% you can already try to guess what it is.",
       closing:
-        "Each perspective reveals part of reality, but none alone is enough to understand the whole. We need to integrate others' experiences, knowledge and perspectives.",
+        "Each perspective reveals <b>part</b> of reality, but <b>none alone is enough</b> to understand the whole. To build a more complete picture, we need to integrate others' experiences, knowledge and perspectives. That's what our next two values are about:",
       startChallenge: "Start challenge",
       values: [
         {
@@ -162,12 +162,12 @@ export const en: Dictionary = {
       minutes: "~3 min",
       gameTitle: "Logic riddle",
       story: [
-        "Facing complex problems, outcomes become less predictable. Often we need to try, observe what happens, and adjust course from what we learn.",
-        "At Ekumen we understand that uncertainty and change are a natural part of our work.",
+        "Facing <b>complex</b> problems, outcomes become less predictable. In those contexts we often need to <b>try</b>, <b>observe</b> what happens, and <b>adjust</b> course from what we learn.",
+        "At Ekumen we understand that uncertainty and change are a natural part of our work, as in the following problem that feels a bit like our everyday reality.",
       ],
       gamePrompt: "Solve this riddle with the clues. You can ask for an extra hint (it costs points).",
       closing:
-        "We trust that whatever the challenge, we can solve it or adapt to circumstances. That trust also means taking initiative.",
+        "We trust that whatever the challenge, we can solve it or <b>adapt</b> to circumstances. That trust also means <b>taking initiative</b> and playing an active role in the search, as reflected in the values of this dimension:",
       startChallenge: "Start challenge",
       values: [
         {
@@ -187,13 +187,13 @@ export const en: Dictionary = {
       minutes: "~2 min",
       gameTitle: "Iterate",
       story: [
-        "We work in dynamic contexts—changes, new requirements, and challenges we often cannot anticipate.",
-        "How do we create value in a scenario like this?",
+        "We work in dynamic contexts—changes, new requirements, and challenges we often <b>cannot anticipate</b>.",
+        "How do we create value in a scenario like this? Let's try to find out in the next activity.",
       ],
       gamePrompt:
         "Guess the word in up to 6 tries. Each attempt gives you information: adjust your strategy and try again.",
       closing:
-        "You did not have all the information at the start. With autonomy, initiative and confidence you built a good-enough solution to move forward.",
+        "In the previous activity you did not have all the information at the start. Still, with <b>autonomy</b>, <b>initiative</b> and <b>confidence</b> in your abilities, you kept building toward a solution. That's what our last two values are about:",
       startChallenge: "Start challenge",
       values: [
         {

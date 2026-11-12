@@ -1,6 +1,5 @@
 -- Ranking compartido. Corré este archivo entero en el SQL Editor de Supabase.
--- Se puede volver a ejecutar: las policies se recrean y las personas de muestra
--- solo se insertan si ese nombre todavía no está.
+-- Se puede volver a ejecutar: las policies se recrean.
 --
 -- Si ves 401 / "permission denied for table scores", re-ejecutá este script:
 -- suele faltar el GRANT a anon/authenticated.
@@ -36,23 +35,3 @@ create policy "Public insert scores"
     and total >= 0
     and total <= 1000
   );
-
-insert into public.scores (display_name, total, breakdown)
-select seed.display_name, seed.total, seed.breakdown
-from (
-  values
-    (
-      'Sofi',
-      846,
-      '{"think":220,"together":210,"happen":206,"deliver":210}'::jsonb
-    ),
-    (
-      'Martín',
-      781,
-      '{"think":198,"together":205,"happen":190,"deliver":188}'::jsonb
-    )
-) as seed(display_name, total, breakdown)
-where not exists (
-  select 1 from public.scores existing
-  where lower(existing.display_name) = lower(seed.display_name)
-);
