@@ -24,7 +24,7 @@ export const en: Dictionary = {
       "how we make things happen",
       "how we deliver",
     ],
-    ekuthon: "This sandbox is the warm-up for Ekuthon: Ekumen's journey on November 23.",
+    ekuthon: "This sandbox is the warm-up for Ekuthon: Ekumen's journey on November 25.",
     cta: "Let's explore them",
   },
   ui: {
@@ -43,7 +43,7 @@ export const en: Dictionary = {
     subtitle: "These are the <b>eight values</b> that guide us.",
     scoreLabel: "Your score",
     ekuthonTicket: "You've got your ticket to Ekuthon",
-    ekuthonDetail: "Ekumen's journey is on November 23. See you there.",
+    ekuthonDetail: "Ekumen's journey is on November 25. See you there.",
     ekuthonSpoiler: "There's an Ekuthon spoiler on this site. Have you found it yet?",
     namePrompt: "Leave your name for the ranking",
     namePlaceholder: "Your name",

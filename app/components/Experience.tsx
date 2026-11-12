@@ -28,6 +28,21 @@ import {
 import type { ClusterId, GameResult } from "@/app/lib/types";
 import { clearAssignedWords } from "@/app/lib/wordleWords";
 
+/** El copy del Ekuthon se muestra solo antes del 25 de noviembre de 2026, en hora local del navegador. */
+function ekuthonCopyVisible() {
+  const cutoff = new Date(2026, 10, 25);
+  cutoff.setHours(0, 0, 0, 0);
+  return Date.now() < cutoff.getTime();
+}
+
+function useEkuthonCopy() {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    setVisible(ekuthonCopyVisible());
+  }, []);
+  return visible;
+}
+
 export function Experience() {
   const { t, locale, setLocale } = useLocale();
   const {
@@ -49,7 +64,6 @@ export function Experience() {
   const [axisStep, setAxisStep] = useState<AxisStep>("story");
   const [viewReady, setViewReady] = useState(false);
   const [fade, setFade] = useState(true);
-  const [animateFacet, setAnimateFacet] = useState<ClusterId | null>(null);
   const [nameInput, setNameInput] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
@@ -122,7 +136,6 @@ export function Experience() {
   function onGameFinish(result: GameResult) {
     const id = axis.id;
     markComplete(id, result.score);
-    setAnimateFacet(id);
     transition(() => setAxisStep("reveal"));
   }
 
@@ -130,7 +143,6 @@ export function Experience() {
     if (axisIndex >= axes.length - 1) {
       transition(() => {
         setPhase("closing");
-        setAnimateFacet(null);
         setExpandedCard(null);
       });
       return;
@@ -138,7 +150,6 @@ export function Experience() {
     transition(() => {
       setAxisIndex((i) => i + 1);
       setAxisStep("story");
-      setAnimateFacet(null);
     });
   }
 
@@ -197,13 +208,13 @@ export function Experience() {
       setPhase("intro");
       setAxisIndex(0);
       setAxisStep("story");
-      setAnimateFacet(null);
       setRows([]);
       setPublishError(null);
     });
   }
 
   const isClosing = phase === "closing";
+  const showEkuthon = useEkuthonCopy();
 
   return (
     <div className={isClosing ? "min-h-dvh" : "flex h-dvh flex-col overflow-hidden"}>
@@ -219,13 +230,10 @@ export function Experience() {
             })
           }
         >
-          <Mark
-            progress={ready ? progress : undefined}
-            wordmark
-            animate={animateFacet}
-            className={`h-6 text-[1.25rem] transition-opacity sm:h-7 sm:text-[1.5rem] ${
-              ready ? "opacity-100" : "opacity-0"
-            }`}
+          <img
+            src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/logo-horizontal.svg`}
+            alt=""
+            className="h-auto w-auto max-h-7 max-w-[min(46vw,240px)] sm:max-h-8 sm:max-w-[280px]"
           />
         </button>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
@@ -339,11 +347,13 @@ export function Experience() {
                   );
                 })}
               </ul>
-              <RichText
-                as="p"
-                html={t.intro.ekuthon}
-                className="intro-p mt-4 max-w-2xl border-l-2 border-[#023D8F] pl-3 text-[clamp(0.75rem,0.2vw+0.68rem,0.875rem)] leading-[1.55] text-[#023D8F]"
-              />
+              {showEkuthon && t.intro.ekuthon ? (
+                <RichText
+                  as="p"
+                  html={t.intro.ekuthon}
+                  className="intro-p mt-4 max-w-2xl border-l-2 border-[#023D8F] pl-3 text-[clamp(0.75rem,0.2vw+0.68rem,0.875rem)] leading-[1.55] text-[#023D8F]"
+                />
+              ) : null}
               <div className="intro-cta mt-6">
                 <Button type="button" onClick={startJourney} className="w-full sm:w-auto">
                   {t.intro.cta}
@@ -519,17 +529,19 @@ export function Experience() {
                 />
               </div>
 
-              <div className="mx-auto mt-10 max-w-lg border-t border-[#02043E]/08 pt-8">
-                <p className="text-[clamp(1.125rem,0.8vw+0.8rem,1.375rem)] font-medium tracking-tight text-[#023D8F]">
-                  {t.closing.ekuthonTicket}
-                </p>
-                <p className="mt-2 text-[clamp(0.8125rem,0.3vw+0.7rem,0.9375rem)] leading-relaxed text-[#02043E]/70">
-                  {t.closing.ekuthonDetail}
-                </p>
-                <p className="mt-4 text-[clamp(0.8125rem,0.3vw+0.7rem,0.9375rem)] font-medium leading-relaxed text-[#023D8F]">
-                  {t.closing.ekuthonSpoiler}
-                </p>
-              </div>
+              {showEkuthon ? (
+                <div className="mx-auto mt-10 max-w-lg border-t border-[#02043E]/08 pt-8">
+                  <p className="text-[clamp(1.125rem,0.8vw+0.8rem,1.375rem)] font-medium tracking-tight text-[#023D8F]">
+                    {t.closing.ekuthonTicket}
+                  </p>
+                  <p className="mt-2 text-[clamp(0.8125rem,0.3vw+0.7rem,0.9375rem)] leading-relaxed text-[#02043E]/70">
+                    {t.closing.ekuthonDetail}
+                  </p>
+                  <p className="mt-4 text-[clamp(0.8125rem,0.3vw+0.7rem,0.9375rem)] font-medium leading-relaxed text-[#023D8F]">
+                    {t.closing.ekuthonSpoiler}
+                  </p>
+                </div>
+              ) : null}
 
               <div className="mx-auto mt-10 max-w-md text-left">
                 {!submitted ? (
